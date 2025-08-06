@@ -8,14 +8,11 @@ ARG KORTEX_BRANCH=ARMv8
 WORKDIR ${WORKSPACE_ROOT}
 
 # any utilities you want
-RUN apt-get update && apt-get install -y git wget python3-pip vim net-tools netcat-traditional build-essential cmake \
+RUN apt update && apt install -y git wget python3-pip vim net-tools netcat-traditional build-essential cmake \
     ros-$ROS_DISTRO-rmw-cyclonedds-cpp python3-colcon-common-extensions python3-vcstool ros-jazzy-moveit \
     curl lsb-release gnupg \
-    gstreamer1.0-tools gstreamer1.0-libav libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libgstreamer-plugins-good1.0-dev gstreamer1.0-plugins-good gstreamer1.0-plugins-base
-
-RUN curl https://packages.osrfoundation.org/gazebo.gpg --output /usr/share/keyrings/pkgs-osrf-archive-keyring.gpg && \
-    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/pkgs-osrf-archive-keyring.gpg] http://packages.osrfoundation.org/gazebo/ubuntu-stable $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/gazebo-stable.list > /dev/null && \
-    apt update && apt install -y gz-harmonic
+    gstreamer1.0-tools gstreamer1.0-libav libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libgstreamer-plugins-good1.0-dev gstreamer1.0-plugins-good gstreamer1.0-plugins-base \
+    ros-jazzy-ros-gz
 
 ENV RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
 

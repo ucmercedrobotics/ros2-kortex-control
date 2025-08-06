@@ -16,18 +16,15 @@ repo-init:
 	python3 -m pip install pre-commit && \
 	pre-commit install
 
-multiarch-builder:
-	docker buildx create --name multiarch --driver docker-container --use
-
 push:
-	docker buildx build --platform ${PLATFORM} -t ${IMAGE}:${ARCH_TAG} --target base . --push
+	docker build --platform ${PLATFORM} -t ${IMAGE}:${ARCH_TAG} --target base . --push
 
 shell:
 	CONTAINER_PS=$(shell docker ps -aq --filter ancestor=${IMAGE}) && \
 	docker exec -it $${CONTAINER_PS} bash
 
-build-prod:
-	docker buildx build --platform ${PLATFORM} . -t ${IMAGE} --target base --build-arg KORTEX_BRANCH=${KORTEX_BRANCH}
+build-image:
+	docker build --platform ${PLATFORM} . -t ${IMAGE}:${ARCH_TAG} --target base --build-arg KORTEX_BRANCH=${KORTEX_BRANCH}
 
 vnc:
 	docker run -d --rm --net=host \

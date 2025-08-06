@@ -32,12 +32,6 @@ make repo-init
 - Make
 
 ### Docker Setup
-
-Build the development image:
-```bash
-make build-dev
-```
-
 Launch an interactive container:
 ```bash
 make bash

@@ -2,6 +2,16 @@ IMAGE:=ghcr.io/ucmercedrobotics/ros2-kortex-control
 WORKSPACE:=kortex-control
 NOVNC:=ghcr.io/ucmercedrobotics/docker-novnc
 
+ARCH := $(shell uname -m)
+PLATFORM := linux/amd64
+KORTEX_BRANCH:=main
+ARCH_TAG:=amd64
+ifneq (,$(filter $(ARCH),arm64 aarch64))
+	PLATFORM := linux/arm64/v8
+	KORTEX_BRANCH:=ARMv8
+	ARCH_TAG:=arm64
+endif
+
 repo-init:
 	python3 -m pip install pre-commit && \
 	pre-commit install
@@ -10,17 +20,14 @@ multiarch-builder:
 	docker buildx create --name multiarch --driver docker-container --use
 
 push:
-	docker buildx build --platform linux/arm64/v8,linux/amd64 -t ${IMAGE} --target base . --push
+	docker buildx build --platform ${PLATFORM} -t ${IMAGE}:${ARCH_TAG} --target base . --push
 
 shell:
 	CONTAINER_PS=$(shell docker ps -aq --filter ancestor=${IMAGE}) && \
 	docker exec -it $${CONTAINER_PS} bash
 
-build-dev:
-	docker build . -t ${IMAGE} --target base
-
 build-prod:
-	docker buildx build --platform linux/arm64/v8 . -t ${IMAGE} --target base
+	docker buildx build --platform ${PLATFORM} . -t ${IMAGE} --target base --build-arg KORTEX_BRANCH=${KORTEX_BRANCH}
 
 vnc:
 	docker run -d --rm --net=host \
@@ -42,7 +49,7 @@ bash:
 	--privileged \
 	-v .:/${WORKSPACE}:Z \
 	-v ~/.ssh:/root/.ssh:ro \
-	${IMAGE} bash
+	${IMAGE}:${ARCH_TAG} bash
 
 clean:
 	rm -rf build/ install/ log/

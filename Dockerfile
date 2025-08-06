@@ -1,12 +1,11 @@
-ARG ROS_DISTRO=jazzy 
+ARG ROS_DISTRO=jazzy
 
 FROM ghcr.io/sloretz/ros:${ROS_DISTRO}-desktop-full AS base
 
 ARG PACKAGE_NAME="kortex-control"
 ARG WORKSPACE_ROOT="/${PACKAGE_NAME}"
+ARG KORTEX_BRANCH=ARMv8
 WORKDIR ${WORKSPACE_ROOT}
-
-# TODO: downgrade this image in production
 
 # any utilities you want
 RUN apt-get update && apt-get install -y git wget python3-pip vim net-tools netcat-traditional build-essential cmake \
@@ -27,7 +26,7 @@ ENV RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
 ENV KORTEX_WS=/root/workspace/ros2_kortex_ws
 RUN mkdir -p ${KORTEX_WS}/src
 RUN cd ${KORTEX_WS} && \
-    git clone https://github.com/ucmercedrobotics/ros2_kortex.git -b ARMv8 src/ros2_kortex && \
+    git clone https://github.com/ucmercedrobotics/ros2_kortex.git -b ${KORTEX_BRANCH} src/ros2_kortex && \
     vcs import src --skip-existing --input src/ros2_kortex/ros2_kortex.${ROS_DISTRO}.repos && \
     vcs import src --skip-existing --input src/ros2_kortex/ros2_kortex-not-released.${ROS_DISTRO}.repos && \
     vcs import src --skip-existing --input src/ros2_kortex/simulation.${ROS_DISTRO}.repos

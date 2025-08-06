@@ -2,7 +2,7 @@ ARG ROS_DISTRO=jazzy
 
 FROM ghcr.io/sloretz/ros:${ROS_DISTRO}-desktop-full AS base
 
-ARG PACKAGE_NAME="jetson-kortex"
+ARG PACKAGE_NAME="kortex-control"
 ARG WORKSPACE_ROOT="/${PACKAGE_NAME}"
 WORKDIR ${WORKSPACE_ROOT}
 

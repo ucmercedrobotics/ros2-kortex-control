@@ -1,5 +1,5 @@
-IMAGE:=ghcr.io/ucmercedrobotics/ros2-jetson-kortex-control
-WORKSPACE:=jetson-kortex
+IMAGE:=ghcr.io/ucmercedrobotics/ros2-kortex-control
+WORKSPACE:=kortex-control
 NOVNC:=ghcr.io/ucmercedrobotics/docker-novnc
 
 repo-init:
@@ -27,6 +27,14 @@ vnc:
 	--name=novnc \
 	${NOVNC}
 
+sim:
+	ros2 launch kortex_bringup gen3.launch.py \
+ 	robot_ip:=yyy.yyy.yyy.yyy \
+	use_fake_hardware:=true \
+	dof:=6 \
+	vision:=true \
+	gripper:=robotiq_2f_85
+
 bash:
 	docker run -it --rm \
 	--net=host \
@@ -38,12 +46,3 @@ bash:
 
 clean:
 	rm -rf build/ install/ log/
-
-gazebo:
-	ros2 launch kortex_bringup gen3.launch.py \
-  	robot_ip:=yyy.yyy.yyy.yyy \
-  	use_fake_hardware:=true \
-	dof:=6
-
-foxglove:
-	ros2 launch foxglove_bridge foxglove_bridge_launch.xml

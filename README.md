@@ -86,6 +86,11 @@ Clean build artifacts:
 make clean
 ```
 
+### Vision
+```bash
+make vision
+```
+
 ## Container Architecture
 
 The Docker image includes:

@@ -20,7 +20,7 @@ push:
 	docker build --platform ${PLATFORM} -t ${IMAGE}:${ARCH_TAG} --target base . --push
 
 shell:
-	CONTAINER_PS=$(shell docker ps -aq --filter ancestor=${IMAGE}) && \
+	CONTAINER_PS=$(shell docker ps -aq --filter ancestor=${IMAGE}:${ARCH_TAG}) && \
 	docker exec -it $${CONTAINER_PS} bash
 
 build-image:
@@ -38,6 +38,9 @@ sim:
 	dof:=6 \
 	vision:=true \
 	gripper:=robotiq_2f_85
+
+vision:
+	ros2 launch kinova_vision kinova_vision.launch.py depth_registration:=true
 
 bash:
 	docker run -it --rm \

@@ -5,19 +5,20 @@ FROM ghcr.io/sloretz/ros:${ROS_DISTRO}-desktop-full AS base
 ARG PACKAGE_NAME="kortex-control"
 ARG WORKSPACE_ROOT="/${PACKAGE_NAME}"
 ARG KORTEX_BRANCH=ARMv8
-WORKDIR ${WORKSPACE_ROOT}
 
 # any utilities you want
-RUN apt update && apt install -y git wget python3-pip vim net-tools netcat-traditional build-essential cmake \
-    ros-$ROS_DISTRO-rmw-cyclonedds-cpp python3-colcon-common-extensions python3-vcstool ros-jazzy-moveit \
+RUN apt update && apt install -y git wget python3-full vim net-tools netcat-traditional build-essential cmake \
+    ros-$ROS_DISTRO-rmw-cyclonedds-cpp python3-colcon-common-extensions python3-vcstool ros-${ROS_DISTRO}-moveit \
     curl lsb-release gnupg \
     gstreamer1.0-tools gstreamer1.0-libav libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libgstreamer-plugins-good1.0-dev gstreamer1.0-plugins-good gstreamer1.0-plugins-base \
-    ros-jazzy-ros-gz
+    ros-${ROS_DISTRO}-ros-gz
 
 ENV RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
 
-#COPY requirements.txt /requirements.txt
-#RUN pip install -r /requirements.txt
+COPY requirements.txt /requirements.txt
+RUN python3 -m venv .venv && \
+    . .venv/bin/activate && \
+    pip install -r /requirements.txt
 
 # build Kinova Kortex
 ENV KORTEX_WS=/root/workspace/ros2_kortex_ws
@@ -45,6 +46,8 @@ RUN cd $VISION_WS && git clone https://github.com/Kinovarobotics/ros2_kortex_vis
     colcon build
 # END vision module end
 
+WORKDIR ${WORKSPACE_ROOT}
+
 # Copy everything into the workspace (except what's in .dockerignore)
 COPY . ${WORKSPACE_ROOT}
 
@@ -58,4 +61,5 @@ ENV DISPLAY=:2 \
 RUN echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> /root/.bashrc
 RUN echo "source ${KORTEX_WS}/install/setup.bash" >> /root/.bashrc
 RUN echo "source ${VISION_WS}/install/setup.bash" >> /root/.bashrc
-#RUN echo "source ${WORKSPACE_ROOT}/install/setup.bash" >> /root/.bashrc
+RUN echo "source /.venv/bin/activate" >> /root/.bashrc
+RUN echo "source ${WORKSPACE_ROOT}/install/setup.bash" >> /root/.bashrc

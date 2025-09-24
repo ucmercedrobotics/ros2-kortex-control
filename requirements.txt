@@ -1,0 +1,6 @@
+# ROS2 deps
+empy
+catkin_pkg
+lark
+# Detect Object deps
+ultralytics

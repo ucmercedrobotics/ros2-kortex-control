@@ -4,7 +4,7 @@ NOVNC:=ghcr.io/ucmercedrobotics/docker-novnc
 
 ARCH := $(shell uname -m)
 PLATFORM := linux/amd64
-KORTEX_BRANCH:=main
+KORTEX_BRANCH:=humble
 ARCH_TAG:=amd64
 ifneq (,$(filter $(ARCH),arm64 aarch64))
 	PLATFORM := linux/arm64/v8

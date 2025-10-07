@@ -1,5 +1,5 @@
 # ROS2 deps
-empy
+empy==3.3.4
 catkin_pkg
 lark
 # Detect Object deps

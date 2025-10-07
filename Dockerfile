@@ -1,4 +1,4 @@
-ARG ROS_DISTRO=jazzy
+ARG ROS_DISTRO=humble
 
 FROM ghcr.io/sloretz/ros:${ROS_DISTRO}-desktop-full AS base
 
@@ -10,7 +10,8 @@ ARG KORTEX_BRANCH=ARMv8
 RUN apt update && apt install -y git wget python3-full vim net-tools netcat-traditional build-essential cmake \
     ros-$ROS_DISTRO-rmw-cyclonedds-cpp python3-colcon-common-extensions python3-vcstool ros-${ROS_DISTRO}-moveit \
     curl lsb-release gnupg \
-    gstreamer1.0-tools gstreamer1.0-libav libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libgstreamer-plugins-good1.0-dev gstreamer1.0-plugins-good gstreamer1.0-plugins-base \
+    gstreamer1.0-tools gstreamer1.0-libav libgstreamer1.0-dev \
+    libgstreamer-plugins-base1.0-dev libgstreamer-plugins-good1.0-dev gstreamer1.0-plugins-good gstreamer1.0-plugins-base \
     ros-${ROS_DISTRO}-ros-gz
 
 ENV RMW_IMPLEMENTATION=rmw_cyclonedds_cpp

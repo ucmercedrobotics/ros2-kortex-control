@@ -27,13 +27,13 @@ RUN mkdir -p ${KORTEX_WS}/src
 RUN cd ${KORTEX_WS} && \
     git clone https://github.com/ucmercedrobotics/ros2_kortex.git -b ${KORTEX_BRANCH} src/ros2_kortex && \
     vcs import src --skip-existing --input src/ros2_kortex/ros2_kortex.${ROS_DISTRO}.repos && \
-    vcs import src --skip-existing --input src/ros2_kortex/ros2_kortex-not-released.${ROS_DISTRO}.repos && \
-    vcs import src --skip-existing --input src/ros2_kortex/simulation.${ROS_DISTRO}.repos
+    vcs import src --skip-existing --input src/ros2_kortex/ros2_kortex-not-released.${ROS_DISTRO}.repos
+#    vcs import src --skip-existing --input src/ros2_kortex/simulation.${ROS_DISTRO}.repos
 
 RUN . /opt/ros/${ROS_DISTRO}/setup.sh && \
     cd ${KORTEX_WS} && \
     apt update && \
-    rosdep install --ignore-src --from-paths src -y -r && \
+    (rosdep install --ignore-src --from-paths src -y -r || true) && \
     colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release
 
 # BEGIN vision module compilation

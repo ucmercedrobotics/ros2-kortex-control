@@ -4,3 +4,15 @@ catkin_pkg
 lark
 # Detect Object deps
 ultralytics
+# Leaf Segmentation deps
+numpy
+opencv-python
+open3d
+Pillow
+matplotlib
+scipy
+scikit-learn
+kneed
+pandas
+pyyaml
+protobuf

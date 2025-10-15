@@ -6,10 +6,14 @@ ARCH := $(shell uname -m)
 PLATFORM := linux/amd64
 KORTEX_BRANCH:=humble
 ARCH_TAG:=amd64
+TARGET:=base
+CUDA_MOUNT:=
 ifneq (,$(filter $(ARCH),arm64 aarch64))
 	PLATFORM := linux/arm64/v8
 	KORTEX_BRANCH:=ARMv8
 	ARCH_TAG:=arm64
+	TARGET:=jetson
+	CUDA_MOUNT:= -v /usr/local/cuda-12.2:/usr/local/cuda:ro
 endif
 
 repo-init:
@@ -17,14 +21,14 @@ repo-init:
 	pre-commit install
 
 push:
-	docker build --platform ${PLATFORM} -t ${IMAGE}:${ARCH_TAG} --target base . --push
+	docker build --platform ${PLATFORM} -t ${IMAGE}:${ARCH_TAG} --target ${TARGET} . --push
 
 shell:
 	CONTAINER_PS=$(shell docker ps -aq --filter ancestor=${IMAGE}:${ARCH_TAG}) && \
 	docker exec -it $${CONTAINER_PS} bash
 
 build-image:
-	docker build --platform ${PLATFORM} . -t ${IMAGE}:${ARCH_TAG} --target base --build-arg KORTEX_BRANCH=${KORTEX_BRANCH}
+	docker build --platform ${PLATFORM} . -t ${IMAGE}:${ARCH_TAG} --target ${TARGET} --build-arg KORTEX_BRANCH=${KORTEX_BRANCH}
 
 vnc:
 	docker run -d --rm --net=host \
@@ -47,6 +51,7 @@ bash:
 	--net=host \
 	--runtime=nvidia \
 	--privileged \
+	${CUDA_MOUNT} \
 	-v .:/${WORKSPACE}:Z \
 	-v ~/.ssh:/root/.ssh:ro \
 	${IMAGE}:${ARCH_TAG} bash

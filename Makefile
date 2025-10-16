@@ -13,7 +13,8 @@ ifneq (,$(filter $(ARCH),arm64 aarch64))
 	KORTEX_BRANCH:=ARMv8
 	ARCH_TAG:=arm64
 	TARGET:=jetson
-	CUDA_MOUNT:= -v /usr/local/cuda-12.2:/usr/local/cuda:ro
+	CUDA_MOUNT:= -v /usr/local/cuda-12.2:/usr/local/cuda:ro \
+		     -v /usr/lib/aarch64-linux-gnu:/usr/lib/aarch64-linux-gnu:ro
 endif
 
 repo-init:

@@ -71,8 +71,8 @@ RUN wget "https://nvidia.box.com/shared/static/mp164asf3sceb570wvjsrezk1p4ftj8t.
     mv mp164asf3sceb570wvjsrezk1p4ftj8t.whl torch-2.3.0-cp310-cp310-linux_aarch64.whl && \
     wget "https://nvidia.box.com/shared/static/xpr06qe6ql3l6rj22cu3c45tz1wzi36p.whl" && \
     mv xpr06qe6ql3l6rj22cu3c45tz1wzi36p.whl torchvision-0.18.0a0+6043bc2-cp310-cp310-linux_aarch64.whl && \
-    . .venv/bin/activate && \
+    . /.venv/bin/activate && \
     pip install torch-2.3.0-cp310-cp310-linux_aarch64.whl torchvision-0.18.0a0+6043bc2-cp310-cp310-linux_aarch64.whl
 
-ENV LD_LIBRARY_PATH=/usr/local/cuda/lib64:/usr/local/cuda-12.2/targets/aarch64-linux/lib/
+ENV LD_LIBRARY_PATH=/usr/local/cuda/lib64:/usr/local/cuda-12.2/targets/aarch64-linux/lib/:/usr/lib/aarch64-linux-gnu/openblas-pthread
 ENV PATH=/usr/local/cuda/bin:${PATH}

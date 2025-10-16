@@ -36,13 +36,17 @@ vnc:
 	--name=novnc \
 	${NOVNC}
 
-sim:
-	ros2 launch kortex_bringup gen3.launch.py \
- 	robot_ip:=yyy.yyy.yyy.yyy \
+moveit:
+	ros2 launch kortex_move robot.launch.py \
+	use_sim_time:=true \
+	robot_ip:=yyy.yyy.yyy.yyy \
 	use_fake_hardware:=true \
-	dof:=6 \
-	vision:=true \
-	gripper:=robotiq_2f_85
+	vision:=true
+
+moveit-target:
+	ros2 launch kortex_move robot.launch.py \
+  	robot_ip:=192.168.1.10 \
+	vision:=true
 
 vision:
 	ros2 launch kinova_vision kinova_vision.launch.py depth_registration:=true

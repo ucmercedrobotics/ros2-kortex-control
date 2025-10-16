@@ -33,25 +33,19 @@ make bash
 
 Launch the robot in simulation with fake hardware:
 ```bash
-make sim
+make moveit
 ```
-
-This will start the Gen3 robot with:
-- 6 degrees of freedom
-- Vision system enabled
-- Robotiq 2F-85 gripper
-- Fake hardware interface
 
 ### Hardware Control
 
-For real hardware, modify the `sim` target in the Makefile to use your robot's IP address:
+For real hardware, configure your network interface to connect to the same subnet as the Kinova
 ```bash
-ros2 launch kortex_bringup gen3.launch.py \
-    robot_ip:=192.168.1.10 \
-    use_fake_hardware:=false \
-    dof:=6 \
-    vision:=true \
-    gripper:=robotiq_2f_85
+make config-target-network
+```
+
+Then launch moveit,
+```bash
+make moveit-target
 ```
 
 ### Leaf Sensing

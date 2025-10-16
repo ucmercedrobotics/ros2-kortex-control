@@ -1,5 +1,6 @@
 IMAGE:=ghcr.io/ucmercedrobotics/ros2-kortex-control
 WORKSPACE:=kortex-control
+KINOVA_NIC:= en7
 NOVNC:=ghcr.io/ucmercedrobotics/docker-novnc
 
 ARCH := $(shell uname -m)
@@ -20,6 +21,9 @@ endif
 repo-init:
 	python3 -m pip install pre-commit && \
 	pre-commit install
+
+config-target-network:
+	sudo ifconfig ${KINOVA_NIC} 192.168.1.11 netmask 255.255.255.0
 
 push:
 	docker build --platform ${PLATFORM} -t ${IMAGE}:${ARCH_TAG} --target ${TARGET} . --push

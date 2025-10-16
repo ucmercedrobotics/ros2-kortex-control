@@ -12,23 +12,13 @@ Make sure you initialize the repo with pre-commit hooks:
 make repo-init
 ```
 
-## Features
-
-- **ROS2 Jazzy** support with full desktop environment
-- **Kinova Kortex** robot arm control and simulation
-- **Vision integration** with Kortex Vision module
-- **Gazebo simulation** with Harmonic support
-- **Multi-architecture** Docker builds (ARM64/AMD64)
-- **VNC support** for remote visualization
-- **MoveIt integration** for motion planning
-- **Gripper support** (Robotiq 2F-85)
-
 ## Quick Start
 
 ### Prerequisites
 
-- Docker with buildx support
+- Docker
 - NVIDIA Docker runtime (for GPU acceleration)
+- CUDA 12.2 (if working on Jetson)
 - Make
 
 ### Docker Setup
@@ -64,6 +54,14 @@ ros2 launch kortex_bringup gen3.launch.py \
     gripper:=robotiq_2f_85
 ```
 
+### Leaf Sensing
+
+One applied version of vision in this package is leaf segmentation.
+To start,
+```bash
+ros2 launch kortex_vision leaf_segmentation.launch.py
+```
+
 ### VNC Access
 
 Start the VNC server for remote visualization:
@@ -87,23 +85,15 @@ make clean
 ```
 
 ### Vision
+When testing on real hardware, there is a separate node for enabling camera streams.
+Run this in addition to Kortex drivers.
 ```bash
 make vision
 ```
 
-## Container Architecture
-
-The Docker image includes:
-
-- **Base**: ROS2 Jazzy desktop-full environment
-- **Kortex Workspace**: Complete ros2_kortex package with dependencies
-- **Vision Workspace**: Kortex vision module for camera integration
-- **Development Tools**: Build tools, debugging utilities, and development packages
-- **GPU Support**: NVIDIA runtime configuration for hardware acceleration
-
 ## Supported Platforms
 
-<!-- - **AMD64** (x86_64) -->
+- **AMD64** (x86_64)
 - **ARM64** (ARMv8)
 
 ## Related Projects

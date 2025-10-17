@@ -1,5 +1,6 @@
 IMAGE:=ghcr.io/ucmercedrobotics/ros2-kortex-control
 WORKSPACE:=kortex-control
+KINOVA_NIC:= en7
 NOVNC:=ghcr.io/ucmercedrobotics/docker-novnc
 
 ARCH := $(shell uname -m)
@@ -21,6 +22,9 @@ repo-init:
 	python3 -m pip install pre-commit && \
 	pre-commit install
 
+config-target-network:
+	sudo ifconfig ${KINOVA_NIC} 192.168.1.11 netmask 255.255.255.0
+
 push:
 	docker build --platform ${PLATFORM} -t ${IMAGE}:${ARCH_TAG} --target ${TARGET} . --push
 
@@ -36,13 +40,17 @@ vnc:
 	--name=novnc \
 	${NOVNC}
 
-sim:
-	ros2 launch kortex_bringup gen3.launch.py \
- 	robot_ip:=yyy.yyy.yyy.yyy \
+moveit:
+	ros2 launch kortex_move robot.launch.py \
+	use_sim_time:=true \
+	robot_ip:=yyy.yyy.yyy.yyy \
 	use_fake_hardware:=true \
-	dof:=6 \
-	vision:=true \
-	gripper:=robotiq_2f_85
+	vision:=true
+
+moveit-target:
+	ros2 launch kortex_move robot.launch.py \
+  	robot_ip:=192.168.1.10 \
+	vision:=true
 
 vision:
 	ros2 launch kinova_vision kinova_vision.launch.py depth_registration:=true

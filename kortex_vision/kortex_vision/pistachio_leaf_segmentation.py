@@ -45,12 +45,6 @@ class YOLONode(Node):
         # Initialize CV bridge
         self.bridge = CvBridge()
 
-        # Initialize SAM model
-        self.model_path = self.declare_parameter("model_path", "sam2.1_b.pt").value
-        self.confidence_threshold = self.declare_parameter(
-            "confidence_threshold", 0.5
-        ).value
-
         # Check if CUDA is available for Jetson
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.get_logger().info(f"Using device: {self.device}")
@@ -61,14 +55,12 @@ class YOLONode(Node):
             # Move model to GPU if available
             if self.device == "cuda":
                 self.model.to("cuda")
-            self.get_logger().info(
-                f"SAM model loaded from {self.model_path} on {self.device}"
-            )
+            self.get_logger().info(f"YOLO model loaded on {self.device}")
         except Exception as e:
-            self.get_logger().error(f"Failed to load SAM model: {e}")
+            self.get_logger().error(f"Failed to load YOLO model: {e}")
             return
 
-        self.get_logger().info("SAM node initialized for Jetson ARM64")
+        self.get_logger().info("YOLO node initialized for Jetson ARM64")
 
         # Configure QoS for PointCloud2 subscription
         pointcloud_qos = QoSProfile(
@@ -226,8 +218,7 @@ class YOLONode(Node):
 
             self.save_results()
             self.save_ordered_segments()
-            # self.plot_masked_points()
-            # self.plotting_o3d()
+
             self.processed = True
 
         except Exception as e:
@@ -259,7 +250,7 @@ class YOLONode(Node):
         return points, colors
 
     def extract_masks(self):
-        # height, width = 720, 1280
+
         image_array = self.colors.reshape((self.height, self.width, 3)).astype(np.uint8)
         image = PILImage.fromarray(image_array, "RGB")
 
@@ -267,7 +258,6 @@ class YOLONode(Node):
         if self.save_original_image:
             cv2.imwrite("open_cv_original_image.jpg", open_cv_image)
 
-        # TODO: filter out the leaves from the environment
         filtered_leaves_from_environment = self.filter_keep_leaves_only(open_cv_image)
         open_cv_image = filtered_leaves_from_environment
 
@@ -338,12 +328,9 @@ class YOLONode(Node):
             try:
                 mask_boolean = mask.astype(bool)
                 masked_points = xyz_reshaped[mask_boolean]
-                ######################################################################################################################
+
                 depth_filtered_points = self.filter_points_by_depth(masked_points)
-                # filtered_masked_points = self.filter_outliers_dbscan(depth_filtered_points)
-                # filtered_masked_points = self.filter_outliers_optics(depth_filtered_points)
-                # filtered_masked_points = self.filter_outliers_gaussian(filtered_masked_points)
-                # filtered_masked_points = masked_points
+
                 filtered_masked_points = depth_filtered_points
                 if filtered_masked_points.shape[0] > 500:
                     filtered_masked_points = self.filter_outliers_gaussian(
@@ -381,38 +368,9 @@ class YOLONode(Node):
         )
         eps = k_distances[kneedle.knee] if kneedle.knee else self.dbscan_eps
 
-        # plt.figure(figsize=(10, 6))
-        # plt.plot(k_distances, marker='o', linestyle='-', markersize=8)
-        # plt.xlabel('Points sorted by distance')
-        # plt.ylabel('k-distance')
-        # plt.title('K-Distance Plot')
-        # if kneedle.knee is not None:
-        #     plt.axvline(x=kneedle.knee, linestyle='--', color='r', label=f'eps = {eps:.5f}')
-        #     plt.legend()
-
-        # plt.show()
-
         clustering = DBSCAN(eps=eps, min_samples=self.dbscan_ms).fit(points)
         labels = clustering.labels_
         filtered_points = points[labels != -1]
-
-        # fig = plt.figure(figsize=(12, 6))
-
-        # ax1 = fig.add_subplot(121, projection='3d')
-        # ax1.scatter(points[:, 0], points[:, 1], points[:, 2], c='b', marker='o', label='Original Data')
-        # ax1.set_title('Original Data Points')
-        # ax1.set_xlabel('X')
-        # ax1.set_ylabel('Y')
-        # ax1.set_zlabel('Z')
-        # ax1.legend()
-
-        # ax2 = fig.add_subplot(122, projection='3d')
-        # ax2.scatter(filtered_points[:, 0], filtered_points[:, 1], filtered_points[:, 2], c='r', marker='^', label='Filtered Data')
-        # ax2.set_title('Filtered Data Points')
-        # ax2.set_xlabel('X')
-        # ax2.set_ylabel('Y')
-        # ax2.set_zlabel('Z')
-        # ax2.legend()
 
         return filtered_points
 
@@ -426,26 +384,6 @@ class YOLONode(Node):
         labels = clustering.labels_
         filtered_points = points[labels != -1]
 
-        # fig = plt.figure(figsize=(12, 6))
-
-        # ax1 = fig.add_subplot(121, projection='3d')
-        # ax1.scatter(points[:, 0], points[:, 1], points[:, 2], c='b', marker='o', label='Original Data')
-        # ax1.set_title('Original Data Points')
-        # ax1.set_xlabel('X')
-        # ax1.set_ylabel('Y')
-        # ax1.set_zlabel('Z')
-        # ax1.legend()
-
-        # ax2 = fig.add_subplot(122, projection='3d')
-        # ax2.scatter(filtered_points[:, 0], filtered_points[:, 1], filtered_points[:, 2], c='r', marker='^', label='Filtered Data')
-        # ax2.set_title('Filtered Data Points')
-        # ax2.set_xlabel('X')
-        # ax2.set_ylabel('Y')
-        # ax2.set_zlabel('Z')
-        # ax2.legend()
-
-        # plt.show()
-
         return filtered_points
 
     def filter_outliers_gaussian(self, points):
@@ -457,26 +395,6 @@ class YOLONode(Node):
         z_scores = np.abs((points - mean) / std)
 
         filtered_points = points[np.all(z_scores <= z_threshold, axis=1)]
-
-        # fig = plt.figure(figsize=(12, 6))
-
-        # ax1 = fig.add_subplot(121, projection='3d')
-        # ax1.scatter(points[:, 0], points[:, 1], points[:, 2], c='b', marker='o', label='Original Data')
-        # ax1.set_title('Original Data Points')
-        # ax1.set_xlabel('X')
-        # ax1.set_ylabel('Y')
-        # ax1.set_zlabel('Z')
-        # ax1.legend()
-
-        # ax2 = fig.add_subplot(122, projection='3d')
-        # ax2.scatter(filtered_points[:, 0], filtered_points[:, 1], filtered_points[:, 2], c='r', marker='^', label='Filtered Data')
-        # ax2.set_title('Filtered Data Points')
-        # ax2.set_xlabel('X')
-        # ax2.set_ylabel('Y')
-        # ax2.set_zlabel('Z')
-        # ax2.legend()
-
-        # plt.show()
 
         return filtered_points
 
@@ -512,18 +430,10 @@ class YOLONode(Node):
 
         return vectors
 
-    ##################################################################
     def axes_for_masks(self):
         axes = []
 
         for i in range(len(self.masks_xyzs)):
-
-            ## first approach (closest point)
-            # edge_points = self.find_edge_points(self.ordered_masks[i])
-            # edge_xyz_points = self.points.reshape((self.height, self.width, 3))[edge_points[:, 0], edge_points[:, 1]]
-            # distances = np.linalg.norm(edge_xyz_points - self.midpoints[i], axis=1)
-            # closest_point = edge_xyz_points[np.argmin(distances)]
-            # vector_to_midpoint = closest_point - self.midpoints[i]
 
             ## Second approach (stem from the lowest y value)
             mask_xyz_points = self.masks_xyzs[i]
@@ -535,17 +445,6 @@ class YOLONode(Node):
             )
             cross_axis = np.cross(self.normal_vectors[i], stem_mid_axis)
             axes.append([self.normal_vectors[i], stem_mid_axis, cross_axis])
-
-            ## third approach (stem from the highest y value or the tip)
-            # mask_xyz_points = self.masks_xyzs[i]
-            # highest_y_point = mask_xyz_points[np.argmax(mask_xyz_points[:, 1])]
-            # vector_to_midpoint = highest_y_point - self.midpoints[i]
-
-            # tip_mid_axis = self.project_vector_onto_plane(vector_to_midpoint, self.normal_vectors[i])
-
-            # cross_axis = np.cross(self.normal_vectors[i], tip_mid_axis)
-            # axes.append([-self.normal_vectors[i], -tip_mid_axis, cross_axis])
-            # # axes.append([-self.normal_vectors[i], -tip_mid_axis, cross_axis]) #rotat3 180 deg around Z to protect sensors on RG2
 
         return axes
 
@@ -570,38 +469,12 @@ class YOLONode(Node):
         self.normal_vectors = [self.normal_vectors[idx] for idx in filtered_indices]
         self.axes = [self.axes[idx] for idx in filtered_indices]
 
-    # def transform_axes_and_calculate_rotation(self):
-    #     transformed_elements = []
-    #     for i, axis_set in enumerate(self.axes):
-
-    #         position = self.midpoints[i]
-    #         transformed_p=(
-    #                         np.array([17.5, 124.33, -195.62])*0.001+  ### the vector that connects RG2 to camera
-    #                         np.array([0.0, 0.0, -15.0])*0.001+ ### the gap between the new printed fingers and the old ones
-    #                         np.array([-position[0], -position[1], position[2]])
-    #                         # np.array([0, 0, 230.0]) ### subtract the flange to endeffector vector for Moveit
-    #                         )
-
-    #         axis1, axis2, axis3 = axis_set[0], axis_set[1], axis_set[2]
-
-    #         transformed_axes = np.array([[-axis1[0], -axis1[1], -axis1[2]],
-    #                                      [-axis2[0], -axis2[1], -axis2[2]],
-    #                                      [axis3[0], axis3[1], axis3[2]]])
-
-    #         rotmat = R.from_matrix(transformed_axes)
-    #         rotation_as_quat = rotmat.as_quat()
-    #         transformed_elements.append(np.concatenate([transformed_p, rotation_as_quat]))
-
-    #     return np.array(transformed_elements)
-
     def calculate_multiple_poses(self, original_sensor_header):
         Poses1, Poses2, Poses3, Poses4, Poses5 = [], [], [], [], []
 
-        # 1. Define all frames and the physical offset.
         source_frame = "camera_color_frame"
         final_target_frame = "base_link"
 
-        # Key Change 1: Define the constant finger offset in the end-effector's local frame.
         # This is the vector from the 'end_effector_link' to the fingers.
         FINGER_OFFSET_Z = 0.1438
         offset_in_ee_frame = np.array([0.0, 0.0, FINGER_OFFSET_Z])
@@ -609,7 +482,6 @@ class YOLONode(Node):
         for i, axis_set in enumerate(self.axes):
             # Create the initial pose in the source (camera) frame.
             pose_in_camera = PoseStamped()
-            # >>>>>>>>>>>>>>>>HERE
             pose_in_camera.header.stamp = Time().to_msg()
             pose_in_camera.header.frame_id = source_frame
 
@@ -646,7 +518,7 @@ class YOLONode(Node):
             )
             base_orientation_in_base_link = orientation_in_base_link.as_matrix()
 
-            # Key Change 2: Loop through rotations and calculate corrected positions for each.
+            # Loop through rotations and calculate corrected positions for each.
             poses_lists = [Poses1, Poses2, Poses3, Poses4, Poses5]
             angles = [0, -45, -90, -135, -180]
 
@@ -804,100 +676,6 @@ class YOLONode(Node):
         plot_path = os.path.join(self.savedir, "segmented_image_ordered.png")
         cv2.imwrite(plot_path, open_cv_image)
         self.get_logger().info(f"Segmented image with midpoints saved to {plot_path}")
-
-    def plot_masked_points(self):
-        num_masks = min(len(self.masks_xyzs), self.top_n)
-        fig = plt.figure()
-        ax = fig.add_subplot(111, projection="3d")
-        colors = plt.cm.get_cmap("hsv", num_masks)
-
-        for i in range(num_masks):
-            points = self.masks_xyzs[i]
-            if points.size == 0 or self.midpoints[i] is None:
-                continue
-
-            central_point = self.midpoints[i]
-            ax.scatter(points[:, 0], points[:, 1], points[:, 2], color=colors(i), s=1)
-            ax.scatter(
-                central_point[0],
-                central_point[1],
-                central_point[2],
-                color="black",
-                s=60,
-            )
-
-        ax.set_xlabel("X")
-        ax.set_ylabel("Y")
-        ax.set_zlabel("Z")
-        ax.view_init(elev=10, azim=270)
-        plt.show()
-
-    def plotting_o3d(self):
-        threshold = self.threshold_xyz
-
-        distances_main = np.linalg.norm(self.points, axis=1)
-        vis_mask = distances_main < threshold
-        cloud = o3d.geometry.PointCloud()
-        cloud.points = o3d.utility.Vector3dVector(self.points[vis_mask])
-        cloud.colors = o3d.utility.Vector3dVector(self.colors[vis_mask] / 255.0)
-
-        xyz_reshaped = self.points.reshape((self.height, self.width, 3))
-        filtered_xyz = xyz_reshaped[self.combined_masks_filtered.astype(bool)]
-        distances_masks = np.linalg.norm(filtered_xyz, axis=1)
-        vis_mask = distances_masks < threshold
-        filtered_cloud = o3d.geometry.PointCloud()
-        filtered_cloud.points = o3d.utility.Vector3dVector(filtered_xyz[vis_mask])
-        filtered_cloud.paint_uniform_color([0, 1, 0])
-
-        coordinate_frame = o3d.geometry.TriangleMesh.create_coordinate_frame(
-            size=0.1, origin=[0, 0, 0]
-        )
-
-        vis = o3d.visualization.Visualizer()
-        vis.create_window()
-        vis.add_geometry(cloud)
-        vis.add_geometry(filtered_cloud)
-        vis.add_geometry(coordinate_frame)
-
-        num_masks = min(len(self.masks_xyzs), self.top_n)
-
-        for i in range(num_masks):
-            points = self.masks_xyzs[i]
-            if points.size == 0 or self.midpoints[i] is None:
-                continue
-
-            central_point = self.midpoints[i]
-            distance_to_reference = np.linalg.norm(central_point)
-
-            if distance_to_reference < threshold:
-                midpoint_sphere = o3d.geometry.TriangleMesh.create_sphere(radius=0.005)
-                midpoint_sphere.translate(central_point)
-                midpoint_sphere.paint_uniform_color([1, 0, 0])
-                vis.add_geometry(midpoint_sphere)
-
-                for axis_index, axis_color in enumerate(
-                    [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
-                ):
-                    axis_vector = self.axes[i][axis_index] * 0.1
-                    axis_line = o3d.geometry.LineSet()
-                    line_points = [central_point, central_point + axis_vector]
-                    lines = [[0, 1]]
-                    colors = [axis_color]
-                    axis_line.points = o3d.utility.Vector3dVector(line_points)
-                    axis_line.lines = o3d.utility.Vector2iVector(lines)
-                    axis_line.colors = o3d.utility.Vector3dVector(colors)
-                    vis.add_geometry(axis_line)
-
-        vis.run()
-        vis.destroy_window()
-
-
-# def main(args=None):
-#     rclpy.init(args=args)
-#     node = YOLONode()
-#     rclpy.spin(node)
-#     node.destroy_node()
-#     rclpy.shutdown()
 
 
 def main(args=None):

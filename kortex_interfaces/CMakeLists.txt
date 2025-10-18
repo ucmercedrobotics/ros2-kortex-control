@@ -13,6 +13,7 @@ find_package(std_msgs REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
   "action/DetectObject.action"
+  "action/ProcessTarget.action"
   "msg/LeafPoseArrays.msg"
   DEPENDENCIES geometry_msgs std_msgs
 )

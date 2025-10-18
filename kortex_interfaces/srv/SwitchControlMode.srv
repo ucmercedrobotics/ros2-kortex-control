@@ -1,0 +1,5 @@
+# Request: the desired mode ("position" or "velocity")
+string mode
+---
+# Response: success or failure
+bool success

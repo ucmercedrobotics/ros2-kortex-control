@@ -1,0 +1,135 @@
+# KinovaCommandVelocity.action - Hybrid Motion Control Interface
+# ================================================================
+
+# GOAL DEFINITION
+# ================
+
+# Command Types Enum
+# -------------------
+
+# Original Commands (Legacy)
+int32 GO_TO_CARTESIAN_POSE = 1
+int32 EXECUTE_TWIST_FOR_DURATION = 2
+int32 EXECUTE_TWIST_UNTIL_CONTACT = 3
+
+# New Proportional Control Commands
+int32 MOVE_TO_POSE_PROPORTIONAL = 4      # Controlled retreat/approach to position
+int32 APPROACH_WITH_FORCE_CONTROL = 5    # Approach with force feedback
+int32 EXECUTE_PULL_WITH_FORCE_LIMIT = 6  # Safe pulling with force limit
+
+# NEW: Gripper Rotation Commands
+int32 ROTATE_TO_ANGLE_Z = 7              # Rotate to absolute angle
+int32 ROTATE_BY_ANGLE_Z = 8              # Rotate by relative amount
+
+# NEW: 3D Orientation Command
+int32 ORIENT_TOWARDS_POINT = 9           # Orient gripper to look at target point
+
+# Command Selection
+int32 command_type
+
+# ============================================================================
+# LEGACY PARAMETERS (for backward compatibility)
+# ============================================================================
+
+# For GO_TO_CARTESIAN_POSE
+geometry_msgs/Pose target_pose
+
+# For EXECUTE_TWIST_FOR_DURATION
+geometry_msgs/Twist twist_command
+float64 duration
+
+# For EXECUTE_TWIST_UNTIL_CONTACT
+# Uses twist_command + force_threshold (defined below)
+
+# ============================================================================
+# PROPORTIONAL CONTROL PARAMETERS
+# ============================================================================
+
+# For MOVE_TO_POSE_PROPORTIONAL
+geometry_msgs/Point target_position_proportional  # Target XYZ position only
+float64 position_kp                      # Position proportional gain (default: 0.8)
+float64 position_tolerance               # Position tolerance [m] (default: 0.005)
+
+# Angular control (shared by multiple commands)
+float64 angular_kp                       # Angular proportional gain (default: 1.2)
+float64 angular_tolerance                # Angular tolerance [rad] (default: 0.02)
+
+# For APPROACH_WITH_FORCE_CONTROL and EXECUTE_PULL_WITH_FORCE_LIMIT
+geometry_msgs/Vector3 movement_direction # Movement direction (normalized in end-effector frame)
+float64 force_kp                        # Force proportional gain (default: 0.002)
+
+# Force thresholds
+float64 force_threshold                 # Force threshold for EXECUTE_TWIST_UNTIL_CONTACT
+float64 target_force_threshold          # Target force for APPROACH_WITH_FORCE_CONTROL
+float64 max_force_threshold             # Max force limit for EXECUTE_PULL_WITH_FORCE_LIMIT
+
+# Speed limits
+float64 max_linear_speed                # Max linear speed [m/s] (default: 0.05)
+float64 min_speed_threshold             # Min speed before stop [m/s] (default: 0.001)
+
+# Roto-translation parameter
+float64 rotation_angular_speed     # Default: 0.0 (no rotation)
+int32 pull_rotation_direction           # Default: 0 (ignored if speed = 0)
+
+# ============================================================================
+# NEW: GRIPPER ROTATION PARAMETERS
+# ============================================================================
+
+# For ROTATE_TO_ANGLE_Z (absolute rotation)
+float64 target_angle_z                  # Target absolute angle [rad] (normalized to [-π, π])
+
+# For ROTATE_BY_ANGLE_Z (relative rotation)
+float64 rotation_amount                 # Amount to rotate [rad] (positive value, direction controlled below)
+
+# Rotation direction control (for both commands)
+int32 rotation_direction    # 1 = clockwise, -1 = counter-clockwise (robot convention) 0 = shortest path
+                                       # For ROTATE_TO_ANGLE_Z: override shortest path if needed
+                                       # For ROTATE_BY_ANGLE_Z: specify rotation direction
+
+# Rotation control parameters
+float64 max_angular_speed              # Max angular speed [rad/s] (default: 0.5)
+
+# ============================================================================
+# NEW: 3D ORIENTATION PARAMETERS (Combined Position + Orientation)
+# ============================================================================
+
+# For ORIENT_TOWARDS_POINT (now handles both position and orientation simultaneously)
+geometry_msgs/Point target_position_combined     # Where to move the gripper
+geometry_msgs/Point target_point                # 3D point that gripper should look at
+                                                # Uses position_kp, position_tolerance, max_linear_speed for movement
+                                                # Uses angular_kp, angular_tolerance, max_angular_speed for orientation
+
+---
+
+# RESULT DEFINITION
+# ==================
+
+bool success
+string message
+
+---
+
+# FEEDBACK DEFINITION
+# ===================
+
+# Common feedback for all commands
+float64 current_force_value             # Current load cell value
+geometry_msgs/Point current_position    # Current end-effector position
+
+# Proportional control feedback
+float64 distance_to_target             # Remaining distance to target [m]
+float64 current_speed                  # Current movement speed [m/s]
+float64 force_margin                   # Remaining force margin
+
+# NEW: Gripper rotation feedback
+float64 current_angle_z                # Current Z-axis angle [rad]
+float64 angular_error                  # Remaining angular error [rad]
+float64 current_angular_speed          # Current angular speed [rad/s]
+
+# NEW: 3D Orientation feedback
+float64 orientation_error              # Total orientation error [rad]
+geometry_msgs/Vector3 angular_velocity # Current angular velocity [rad/s]
+
+# Status information
+string current_control_mode            # "position" | "velocity"
+string current_phase                   # Current execution phase description

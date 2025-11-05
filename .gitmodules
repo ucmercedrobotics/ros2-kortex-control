@@ -1,0 +1,3 @@
+[submodule "kortex_bt/schemas"]
+	path = kortex_bt/schemas
+	url = git@github.com:ucmercedrobotics/gpt-mission-planner-schemas.git

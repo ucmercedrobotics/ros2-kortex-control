@@ -26,6 +26,12 @@ Launch an interactive container:
 ```bash
 make bash
 ```
+Then build the ROS2 nodes
+```bash
+rosdep install --from-paths . --ignore-src -r -y
+colcon build
+source install/setup.bash
+```
 
 ## Usage
 

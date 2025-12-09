@@ -24,11 +24,13 @@ from rclpy.qos import QoSProfile, DurabilityPolicy, ReliabilityPolicy, HistoryPo
 from sensor_msgs.msg import PointCloud2
 from geometry_msgs.msg import Pose, PoseArray
 from kortex_interfaces.msg import LeafPoseArrays
-from std_srvs.srv import Trigger
+from rclpy.action import ActionServer
+from kortex_interfaces.action import SegmentLeaves
+import traceback
 from cv_bridge import CvBridge
 import tf2_ros
 from geometry_msgs.msg import PoseStamped
-
+from kneed import KneeLocator
 
 class YOLONode(Node):
     def __init__(self):
@@ -89,9 +91,12 @@ class YOLONode(Node):
             LeafPoseArrays, "/multi_target_poses", qos_profile
         )
 
-        # Service to trigger processing
-        self.process_service = self.create_service(
-            Trigger, "/process_point_cloud", self.handle_process_request
+        # Action to trigger processing
+        self._action_server = ActionServer(
+            self,
+            SegmentLeaves,
+            '/process_point_cloud',
+            self.execute_callback
         )
         self.get_logger().info("Ready to process point clouds upon request.")
 
@@ -133,45 +138,41 @@ class YOLONode(Node):
             self.latest_point_cloud = msg
         # self.get_logger().info('Stored a new point cloud.', throttle_duration_sec=5.0)
 
-    def handle_process_request(
-        self, request: Trigger.Request, response: Trigger.Response
-    ):
-        """
-        Service handler to process the latest point cloud on demand.
-        """
-        self.get_logger().info("Received request to process point cloud.")
+    def execute_callback(self, goal_handle):
+        self.get_logger().info('Executing goal...')
+        
+        result = SegmentLeaves.Result()
+        feedback_msg = SegmentLeaves.Feedback()
 
         with self.cloud_lock:
             cloud_to_process = self.latest_point_cloud
-            # Clear it so we don't process the same cloud twice if called again quickly
-            self.latest_point_cloud = None
+            self.latest_point_cloud = None 
 
         if cloud_to_process is None:
-            self.get_logger().warn("No point cloud available to process.")
-            response.success = False
-            response.message = "No point cloud received yet."
-            return response
+            self.get_logger().warn("No point cloud available.")
+            result.success = False
+            result.message = "No point cloud received yet."
+            goal_handle.abort()
+            return result
 
         try:
-            self.get_logger().info(
-                f"Processing PointCloud2 message with {cloud_to_process.width * cloud_to_process.height} points"
-            )
-            # The main processing logic is now called from here
+            feedback_msg.current_state = "Processing pipeline..."
+            goal_handle.publish_feedback(feedback_msg)
+
             self.run_full_pipeline(cloud_to_process)
 
-            response.success = True
-            response.message = "Point cloud processed and poses published."
-            self.get_logger().info("Processing successful.")
-
+            goal_handle.succeed()
+            result.success = True
+            result.message = "Point cloud processed and poses published."
+            
         except Exception as e:
-            response.success = False
-            response.message = f"An error occurred during processing: {e}"
-            self.get_logger().error(f"Error processing point cloud: {e}", exc_info=True)
-            import traceback
-
+            
             traceback.print_exc()
+            result.success = False
+            result.message = f"Error: {str(e)}"
+            goal_handle.abort()
 
-        return response
+        return result
 
     def run_full_pipeline(self, msg: PointCloud2):
         """
@@ -195,37 +196,6 @@ class YOLONode(Node):
         self.save_results()
         self.save_ordered_segments()
 
-    def pointcloud_callback(self, msg):
-        """Callback function for PointCloud2 messages"""
-        try:
-            self.get_logger().info(
-                f"Received PointCloud2 message with {msg.width * msg.height} points"
-            )
-            if self.processed:
-                return
-            self.points, self.colors = self.extract_points_and_colors(msg)
-            self.combined_masks, self.ordered_masks, self.confs = self.extract_masks()
-            self.combined_masks_filtered, self.masks_xyzs = self.extract_masks_xyzs()
-            self.midpoints = self.extract_midpoints()
-            self.normal_vectors = self.fit_plane_and_find_normal()
-            self.axes = self.axes_for_masks()
-            self.reorder_and_limit()
-            self.Poses1, self.Poses2, self.Poses3, self.Poses4, self.Poses5 = (
-                self.calculate_multiple_poses(msg.header)
-            )
-            self.publish_leaf_pose_arrays()
-            # print(self.Poses1)
-
-            self.save_results()
-            self.save_ordered_segments()
-
-            self.processed = True
-
-        except Exception as e:
-            self.get_logger().error(f"Error processing point cloud: {e}")
-            import traceback
-
-            traceback.print_exc()
 
     def extract_points_and_colors(self, cloud_msg):
 

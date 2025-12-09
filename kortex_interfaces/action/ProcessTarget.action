@@ -1,0 +1,11 @@
+# Goal: The 5 poses required to process one target
+geometry_msgs/Pose[5] target_poses
+
+string command
+---
+# Result: Did the operation succeed?
+bool success
+
+---
+# Feedback: Which stage of the sequence is currently being executed?
+string status

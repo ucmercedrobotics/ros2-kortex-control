@@ -27,7 +27,6 @@ setup(
     entry_points={
         "console_scripts": [
             "detect_object = kortex_vision.base_yolo_detection.main",
-            "image_publisher = kortex_vision.image_publisher:main",
             "pistachio_leaf_segmentation = kortex_vision.pistachio_leaf_segmentation:main",
         ],
     },

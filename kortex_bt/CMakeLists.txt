@@ -10,6 +10,9 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_action REQUIRED)
 find_package(behaviortree_ros2 REQUIRED)
+find_package(kortex_interfaces REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(geometry_msgs REQUIRED)
 find_package(LibXml2 REQUIRED)
 
 add_executable(bt_runner
@@ -18,6 +21,8 @@ add_executable(bt_runner
   src/xml_validation.cpp
   src/actions/check_value.cpp
   src/actions/assert_true.cpp
+  src/actions/identify_object.cpp
+  src/actions/move_to.cpp
 )
 
 target_include_directories(bt_runner PUBLIC
@@ -28,6 +33,9 @@ target_include_directories(bt_runner PUBLIC
 ament_target_dependencies(bt_runner
   rclcpp
   behaviortree_ros2
+  kortex_interfaces
+  geometry_msgs
+  tf2
 )
 
 target_link_libraries(bt_runner

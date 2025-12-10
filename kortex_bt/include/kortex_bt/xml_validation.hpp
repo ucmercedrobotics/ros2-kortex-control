@@ -2,7 +2,7 @@
 
 #include <string>
 
-#define KORTEX_SCHEMA_DEFAULT_PATH "/schemas/schemas/kortex_btcpp.xsd"
+#define KORTEX_SCHEMA_DEFAULT_PATH "/schemas/kinova_gen3_6dof.xsd"
 
 namespace xml_validation {
 

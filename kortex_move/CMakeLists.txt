@@ -11,10 +11,17 @@ find_package(rclcpp REQUIRED)
 find_package(moveit_ros_planning_interface REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(kortex_interfaces REQUIRED)
 
 add_executable(hello_moveit src/hello_moveit.cpp)
 
+add_executable(moveto src/moveto.cpp)
+
 target_include_directories(hello_moveit PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
+
+target_include_directories(moveto PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 
@@ -26,8 +33,19 @@ ament_target_dependencies(
   "std_msgs"
 )
 
+ament_target_dependencies(
+  moveto
+  "moveit_ros_planning_interface"
+  "rclcpp"
+  "rclcpp_action"
+  "geometry_msgs"
+  "std_msgs"
+  "kortex_interfaces"
+)
+
 install(TARGETS
   hello_moveit
+  moveto
   DESTINATION lib/${PROJECT_NAME})
 
 # Install launch files

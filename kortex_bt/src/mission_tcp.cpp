@@ -6,6 +6,7 @@
 #include <unistd.h>
 
 #include <cerrno>
+#include <cstdint>
 #include <cstring>
 #include <stdexcept>
 
@@ -59,19 +60,41 @@ std::string wait_for_mission_tcp(int port, const rclcpp::Logger &logger) {
     throw std::runtime_error("accept failed");
   }
 
-  char buf[MISSION_TCP_BUFFER_SIZE];
-  while (true) {
-    ssize_t n = ::read(client_fd, buf, sizeof(buf));
-    if (n > 0) {
-      mission.append(buf, static_cast<size_t>(n));
-    } else if (n == 0) {
-      break;
-    } else {
-      if (errno == EINTR) {
-        continue;
+  auto read_exact = [&](void *dst, size_t len) -> bool {
+    size_t total = 0;
+    char *ptr = static_cast<char *>(dst);
+    while (total < len) {
+      ssize_t n = ::read(client_fd, ptr + total, len - total);
+      if (n > 0) {
+        total += static_cast<size_t>(n);
+      } else if (n == 0) {
+        RCLCPP_ERROR(logger, "Connection closed while reading %zu bytes", len);
+        return false;
+      } else {
+        if (errno == EINTR) {
+          continue;
+        }
+        RCLCPP_ERROR(logger, "read() failed: %s", std::strerror(errno));
+        return false;
       }
-      RCLCPP_ERROR(logger, "read() failed: %s", std::strerror(errno));
-      break;
+    }
+    return true;
+  };
+
+  uint32_t payload_size_network = 0;
+  if (!read_exact(&payload_size_network, sizeof(payload_size_network))) {
+    ::close(client_fd);
+    ::close(server_fd);
+    return mission;
+  }
+
+  const size_t payload_size = static_cast<size_t>(ntohl(payload_size_network));
+  if (payload_size > 0) {
+    mission.resize(payload_size);
+    if (!read_exact(&mission[0], payload_size)) {
+      ::close(client_fd);
+      ::close(server_fd);
+      return mission;
     }
   }
 

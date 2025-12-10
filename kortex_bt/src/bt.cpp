@@ -9,6 +9,8 @@
 #include "behaviortree_ros2/ros_node_params.hpp"
 #include "kortex_bt/actions/assert_true.hpp"
 #include "kortex_bt/actions/check_value.hpp"
+#include "kortex_bt/actions/identify_object.hpp"
+#include "kortex_bt/actions/move_to.hpp"
 #include "kortex_bt/mission_tcp.hpp"
 #include "kortex_bt/xml_validation.hpp"
 
@@ -29,6 +31,9 @@ int main(int argc, char **argv) {
   RosNodeParams ros_params;
   ros_params.nh = nh;
 
+  // action nodes
+  factory.registerNodeType<MoveTo>("goToPosition", ros_params);
+  factory.registerNodeType<IdentifyObject>("identifyObject", ros_params);
   // conditional nodes
   factory.registerNodeType<AssertTrue>("AssertTrue");
   factory.registerNodeType<CheckValue>("CheckValue");

@@ -12,7 +12,7 @@
 
 namespace mission_tcp {
 
-std::string wait_for_mission_tcp(int port, const rclcpp::Logger &logger) {
+std::string wait_for_mission_tcp(int port, const rclcpp::Logger &logger, bool payload_length_included) {
   int server_fd = -1;
   int client_fd = -1;
   std::string mission;
@@ -81,14 +81,18 @@ std::string wait_for_mission_tcp(int port, const rclcpp::Logger &logger) {
     return true;
   };
 
-  uint32_t payload_size_network = 0;
-  if (!read_exact(&payload_size_network, sizeof(payload_size_network))) {
-    ::close(client_fd);
-    ::close(server_fd);
-    return mission;
+  size_t payload_size = MISSION_TCP_DEFAULT_PAYLOAD_LENGTH;
+
+  if (payload_length_included) {
+    uint32_t payload_size_network = 0;
+    if (!read_exact(&payload_size_network, sizeof(payload_size_network))) {
+      ::close(client_fd);
+      ::close(server_fd);
+      return mission;
+    }
+    payload_size = static_cast<size_t>(ntohl(payload_size_network));
   }
 
-  const size_t payload_size = static_cast<size_t>(ntohl(payload_size_network));
   if (payload_size > 0) {
     mission.resize(payload_size);
     if (!read_exact(&mission[0], payload_size)) {

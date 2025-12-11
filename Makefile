@@ -4,7 +4,7 @@ KINOVA_NIC:= en7
 NOVNC:=ghcr.io/ucmercedrobotics/docker-novnc
 
 PORT:=12346
-PAYLOAD:=false
+PAYLOAD:=true
 
 ARCH := $(shell uname -m)
 PLATFORM := linux/amd64

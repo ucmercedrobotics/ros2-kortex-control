@@ -2,4 +2,4 @@ build/
 install/
 log/
 
-yolo11n.pt
+*.pt

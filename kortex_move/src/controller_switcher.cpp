@@ -29,12 +29,12 @@ class ControllerSwitcher : public rclcpp::Node {
             "/controller_manager/list_controllers");
 
     auto handle_switch_request =
-        [this](const std::shared_ptr<
-                   kinova_action_interfaces::srv::SwitchControlMode::Request>
-                   request,
-               std::shared_ptr<
-                   kinova_action_interfaces::srv::SwitchControlMode::Response>
-                   response) -> void {
+        [this](
+            const std::shared_ptr<
+                kinova_interfaces::srv::SwitchControlMode::Request>
+                request,
+            std::shared_ptr<kinova_interfaces::srv::SwitchControlMode::Response>
+                response) -> void {
       RCLCPP_INFO(this->get_logger(), "Switch mode request received: '%s'",
                   request->mode.c_str());
 
@@ -117,7 +117,7 @@ class ControllerSwitcher : public rclcpp::Node {
     };
 
     switch_mode_service_ =
-        this->create_service<kinova_action_interfaces::srv::SwitchControlMode>(
+        this->create_service<kinova_interfaces::srv::SwitchControlMode>(
             "/switch_control_mode", handle_switch_request,
             rmw_qos_profile_services_default, service_callback_group_);
 
@@ -140,7 +140,7 @@ class ControllerSwitcher : public rclcpp::Node {
       switch_controller_client_;
   rclcpp::Client<controller_manager_msgs::srv::ListControllers>::SharedPtr
       list_controllers_client_;
-  rclcpp::Service<kinova_action_interfaces::srv::SwitchControlMode>::SharedPtr
+  rclcpp::Service<kinova_interfaces::srv::SwitchControlMode>::SharedPtr
       switch_mode_service_;
   rclcpp::CallbackGroup::SharedPtr service_callback_group_;
 

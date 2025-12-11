@@ -26,8 +26,8 @@ int main(int argc, char **argv) {
   int port = MISSION_TCP_DEFAULT_PORT;
   nh->declare_parameter<int>("mission_port", port);
   nh->get_parameter("mission_port", port);
-  bool payload_length_included = false;
-  nh->declare_parameter<bool>("mission_payload_length_included", false);
+  bool payload_length_included = true;
+  nh->declare_parameter<bool>("mission_payload_length_included", true);
   nh->get_parameter("mission_payload_length_included", payload_length_included);
 
   BehaviorTreeFactory factory;

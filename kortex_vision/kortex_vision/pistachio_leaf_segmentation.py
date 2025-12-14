@@ -95,7 +95,7 @@ class YOLONode(Node):
         self._action_server = ActionServer(
             self,
             SegmentLeaves,
-            '/process_point_cloud',
+            '/segment_leaves',
             self.execute_callback
         )
         self.get_logger().info("Ready to process point clouds upon request.")

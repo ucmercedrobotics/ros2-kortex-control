@@ -1,0 +1,37 @@
+CmdCodeEnum
+===========
+
+.. currentmodule:: NanoLambdaNSP32
+
+.. autoclass:: CmdCodeEnum
+   :show-inheritance:
+
+   .. rubric:: Attributes Summary
+
+   .. autosummary::
+
+      ~CmdCodeEnum.AcqSpectrum
+      ~CmdCodeEnum.AcqXYZ
+      ~CmdCodeEnum.GetSensorId
+      ~CmdCodeEnum.GetSpectrum
+      ~CmdCodeEnum.GetWavelength
+      ~CmdCodeEnum.GetXYZ
+      ~CmdCodeEnum.Hello
+      ~CmdCodeEnum.Prefix0
+      ~CmdCodeEnum.Prefix1
+      ~CmdCodeEnum.Standby
+      ~CmdCodeEnum.Unknown
+
+   .. rubric:: Attributes Documentation
+
+   .. autoattribute:: AcqSpectrum
+   .. autoattribute:: AcqXYZ
+   .. autoattribute:: GetSensorId
+   .. autoattribute:: GetSpectrum
+   .. autoattribute:: GetWavelength
+   .. autoattribute:: GetXYZ
+   .. autoattribute:: Hello
+   .. autoattribute:: Prefix0
+   .. autoattribute:: Prefix1
+   .. autoattribute:: Standby
+   .. autoattribute:: Unknown

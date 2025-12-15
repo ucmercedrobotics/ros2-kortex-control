@@ -1,0 +1,19 @@
+WavelengthInfo
+==============
+
+.. currentmodule:: NanoLambdaNSP32
+
+.. autoclass:: WavelengthInfo
+   :show-inheritance:
+
+   .. rubric:: Attributes Summary
+
+   .. autosummary::
+
+      ~WavelengthInfo.NumOfPoints
+      ~WavelengthInfo.Wavelength
+
+   .. rubric:: Attributes Documentation
+
+   .. autoattribute:: NumOfPoints
+   .. autoattribute:: Wavelength

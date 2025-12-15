@@ -1,0 +1,25 @@
+XYZInfo
+=======
+
+.. currentmodule:: NanoLambdaNSP32
+
+.. autoclass:: XYZInfo
+   :show-inheritance:
+
+   .. rubric:: Attributes Summary
+
+   .. autosummary::
+
+      ~XYZInfo.IntegrationTime
+      ~XYZInfo.IsSaturated
+      ~XYZInfo.X
+      ~XYZInfo.Y
+      ~XYZInfo.Z
+
+   .. rubric:: Attributes Documentation
+
+   .. autoattribute:: IntegrationTime
+   .. autoattribute:: IsSaturated
+   .. autoattribute:: X
+   .. autoattribute:: Y
+   .. autoattribute:: Z

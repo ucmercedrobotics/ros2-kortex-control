@@ -1,0 +1,20 @@
+.. NSP32 Python API for desktop documentation master file, created by
+   sphinx-quickstart on Wed Jan  9 17:45:34 2019.
+   You can adapt this file completely to your liking, but it should at least
+   contain the root `toctree` directive.
+
+NSP32 Python API for desktop
+============================
+
+.. automodapi:: NanoLambdaNSP32
+   :no-inheritance-diagram:
+   :no-inherited-members:
+
+
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`

@@ -1,0 +1,335 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>ReturnPacket &mdash; NSP32 Python API for desktop  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/graphviz.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="SpectrumInfo" href="NanoLambdaNSP32.SpectrumInfo.html" />
+    <link rel="prev" title="NSP32" href="NanoLambdaNSP32.NSP32.html" /> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> NSP32 Python API for desktop
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="NanoLambdaNSP32.CmdCodeEnum.html">CmdCodeEnum</a></li>
+<li class="toctree-l1"><a class="reference internal" href="NanoLambdaNSP32.NSP32.html">NSP32</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">ReturnPacket</a></li>
+<li class="toctree-l1"><a class="reference internal" href="NanoLambdaNSP32.SpectrumInfo.html">SpectrumInfo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="NanoLambdaNSP32.WavelengthInfo.html">WavelengthInfo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="NanoLambdaNSP32.XYZInfo.html">XYZInfo</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">NSP32 Python API for desktop</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>ReturnPacket</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/api/NanoLambdaNSP32.ReturnPacket.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="returnpacket">
+<h1>ReturnPacket<a class="headerlink" href="#returnpacket" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="NanoLambdaNSP32.ReturnPacket">
+<em class="property">class </em><code class="descclassname">NanoLambdaNSP32.</code><code class="descname">ReturnPacket</code><span class="sig-paren">(</span><em>cmdCode</em>, <em>userCode</em>, <em>isPacketValid</em>, <em>packetBytes</em><span class="sig-paren">)</span><a class="headerlink" href="#NanoLambdaNSP32.ReturnPacket" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>return packet</p>
+<p class="rubric">Attributes Summary</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#NanoLambdaNSP32.ReturnPacket.CmdCode" title="NanoLambdaNSP32.ReturnPacket.CmdCode"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CmdCode</span></code></a></td>
+<td>CmdCodeEnum: command function code</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#NanoLambdaNSP32.ReturnPacket.IsPacketValid" title="NanoLambdaNSP32.ReturnPacket.IsPacketValid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">IsPacketValid</span></code></a></td>
+<td>bool: check if the packet is valid (True for valid; False for invalid)</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#NanoLambdaNSP32.ReturnPacket.PacketBytes" title="NanoLambdaNSP32.ReturnPacket.PacketBytes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PacketBytes</span></code></a></td>
+<td>bytearray: packet data bytes</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#NanoLambdaNSP32.ReturnPacket.UserCode" title="NanoLambdaNSP32.ReturnPacket.UserCode"><code class="xref py py-obj docutils literal notranslate"><span class="pre">UserCode</span></code></a></td>
+<td>int: command user code</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods Summary</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#NanoLambdaNSP32.ReturnPacket.ExtractSensorIdStr" title="NanoLambdaNSP32.ReturnPacket.ExtractSensorIdStr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ExtractSensorIdStr</span></code></a>()</td>
+<td>extract sensor id string from the return packet</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#NanoLambdaNSP32.ReturnPacket.ExtractSpectrumInfo" title="NanoLambdaNSP32.ReturnPacket.ExtractSpectrumInfo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ExtractSpectrumInfo</span></code></a>()</td>
+<td>extract spectrum info from the return packet</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#NanoLambdaNSP32.ReturnPacket.ExtractWavelengthInfo" title="NanoLambdaNSP32.ReturnPacket.ExtractWavelengthInfo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ExtractWavelengthInfo</span></code></a>()</td>
+<td>extract wavelength info from the return packet</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#NanoLambdaNSP32.ReturnPacket.ExtractXYZInfo" title="NanoLambdaNSP32.ReturnPacket.ExtractXYZInfo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ExtractXYZInfo</span></code></a>()</td>
+<td>extract XYZ info from the return packet</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Attributes Documentation</p>
+<dl class="attribute">
+<dt id="NanoLambdaNSP32.ReturnPacket.CmdCode">
+<code class="descname">CmdCode</code><a class="headerlink" href="#NanoLambdaNSP32.ReturnPacket.CmdCode" title="Permalink to this definition">¶</a></dt>
+<dd><p>CmdCodeEnum: command function code</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="NanoLambdaNSP32.ReturnPacket.IsPacketValid">
+<code class="descname">IsPacketValid</code><a class="headerlink" href="#NanoLambdaNSP32.ReturnPacket.IsPacketValid" title="Permalink to this definition">¶</a></dt>
+<dd><p>bool: check if the packet is valid (True for valid; False for invalid)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="NanoLambdaNSP32.ReturnPacket.PacketBytes">
+<code class="descname">PacketBytes</code><a class="headerlink" href="#NanoLambdaNSP32.ReturnPacket.PacketBytes" title="Permalink to this definition">¶</a></dt>
+<dd><p>bytearray: packet data bytes</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="NanoLambdaNSP32.ReturnPacket.UserCode">
+<code class="descname">UserCode</code><a class="headerlink" href="#NanoLambdaNSP32.ReturnPacket.UserCode" title="Permalink to this definition">¶</a></dt>
+<dd><p>int: command user code</p>
+</dd></dl>
+
+<p class="rubric">Methods Documentation</p>
+<dl class="method">
+<dt id="NanoLambdaNSP32.ReturnPacket.ExtractSensorIdStr">
+<code class="descname">ExtractSensorIdStr</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#NanoLambdaNSP32.ReturnPacket.ExtractSensorIdStr" title="Permalink to this definition">¶</a></dt>
+<dd><p>extract sensor id string from the return packet</p>
+<dl class="docutils">
+<dt>Returns:</dt>
+<dd>str: sensor id string (return None if the packet type mismatches)</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="NanoLambdaNSP32.ReturnPacket.ExtractSpectrumInfo">
+<code class="descname">ExtractSpectrumInfo</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#NanoLambdaNSP32.ReturnPacket.ExtractSpectrumInfo" title="Permalink to this definition">¶</a></dt>
+<dd><p>extract spectrum info from the return packet</p>
+<dl class="docutils">
+<dt>Returns:</dt>
+<dd>SpectrumInfo: spectrum info (return None if the packet type mismatches)</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="NanoLambdaNSP32.ReturnPacket.ExtractWavelengthInfo">
+<code class="descname">ExtractWavelengthInfo</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#NanoLambdaNSP32.ReturnPacket.ExtractWavelengthInfo" title="Permalink to this definition">¶</a></dt>
+<dd><p>extract wavelength info from the return packet</p>
+<dl class="docutils">
+<dt>Returns:</dt>
+<dd>WavelengthInfo: wavelength info (return None if the packet type mismatches)</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="NanoLambdaNSP32.ReturnPacket.ExtractXYZInfo">
+<code class="descname">ExtractXYZInfo</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#NanoLambdaNSP32.ReturnPacket.ExtractXYZInfo" title="Permalink to this definition">¶</a></dt>
+<dd><p>extract XYZ info from the return packet</p>
+<dl class="docutils">
+<dt>Returns:</dt>
+<dd>XYZInfo: XYZ info (return None if the packet type mismatches)</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="NanoLambdaNSP32.SpectrumInfo.html" class="btn btn-neutral float-right" title="SpectrumInfo" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="NanoLambdaNSP32.NSP32.html" class="btn btn-neutral" title="NSP32" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, nanoLambda, Inc.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+    
+
+  
+
+  <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,39 @@
+ReturnPacket
+============
+
+.. currentmodule:: NanoLambdaNSP32
+
+.. autoclass:: ReturnPacket
+   :show-inheritance:
+
+   .. rubric:: Attributes Summary
+
+   .. autosummary::
+
+      ~ReturnPacket.CmdCode
+      ~ReturnPacket.IsPacketValid
+      ~ReturnPacket.PacketBytes
+      ~ReturnPacket.UserCode
+
+   .. rubric:: Methods Summary
+
+   .. autosummary::
+
+      ~ReturnPacket.ExtractSensorIdStr
+      ~ReturnPacket.ExtractSpectrumInfo
+      ~ReturnPacket.ExtractWavelengthInfo
+      ~ReturnPacket.ExtractXYZInfo
+
+   .. rubric:: Attributes Documentation
+
+   .. autoattribute:: CmdCode
+   .. autoattribute:: IsPacketValid
+   .. autoattribute:: PacketBytes
+   .. autoattribute:: UserCode
+
+   .. rubric:: Methods Documentation
+
+   .. automethod:: ExtractSensorIdStr
+   .. automethod:: ExtractSpectrumInfo
+   .. automethod:: ExtractWavelengthInfo
+   .. automethod:: ExtractXYZInfo

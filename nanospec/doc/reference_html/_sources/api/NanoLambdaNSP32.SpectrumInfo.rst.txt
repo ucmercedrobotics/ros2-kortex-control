@@ -1,0 +1,29 @@
+SpectrumInfo
+============
+
+.. currentmodule:: NanoLambdaNSP32
+
+.. autoclass:: SpectrumInfo
+   :show-inheritance:
+
+   .. rubric:: Attributes Summary
+
+   .. autosummary::
+
+      ~SpectrumInfo.IntegrationTime
+      ~SpectrumInfo.IsSaturated
+      ~SpectrumInfo.NumOfPoints
+      ~SpectrumInfo.Spectrum
+      ~SpectrumInfo.X
+      ~SpectrumInfo.Y
+      ~SpectrumInfo.Z
+
+   .. rubric:: Attributes Documentation
+
+   .. autoattribute:: IntegrationTime
+   .. autoattribute:: IsSaturated
+   .. autoattribute:: NumOfPoints
+   .. autoattribute:: Spectrum
+   .. autoattribute:: X
+   .. autoattribute:: Y
+   .. autoattribute:: Z

@@ -1,0 +1,2 @@
+uint16[] wavelengths
+float64[] spectrum

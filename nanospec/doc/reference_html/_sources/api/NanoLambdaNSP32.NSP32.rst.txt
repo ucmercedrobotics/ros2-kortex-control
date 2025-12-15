@@ -1,0 +1,31 @@
+NSP32
+=====
+
+.. currentmodule:: NanoLambdaNSP32
+
+.. autoclass:: NSP32
+   :show-inheritance:
+
+   .. rubric:: Methods Summary
+
+   .. autosummary::
+
+      ~NSP32.AcqSpectrum
+      ~NSP32.AcqXYZ
+      ~NSP32.GetSensorId
+      ~NSP32.GetWavelength
+      ~NSP32.Hello
+      ~NSP32.OnReturnByteReceived
+      ~NSP32.OnReturnBytesReceived
+      ~NSP32.Standby
+
+   .. rubric:: Methods Documentation
+
+   .. automethod:: AcqSpectrum
+   .. automethod:: AcqXYZ
+   .. automethod:: GetSensorId
+   .. automethod:: GetWavelength
+   .. automethod:: Hello
+   .. automethod:: OnReturnByteReceived
+   .. automethod:: OnReturnBytesReceived
+   .. automethod:: Standby

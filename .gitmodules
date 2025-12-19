@@ -1,0 +1,3 @@
+[submodule "nanospec"]
+	path = nanospec
+	url = https://github.com/mehradmrt/nanoLambda_ros2_driver.git

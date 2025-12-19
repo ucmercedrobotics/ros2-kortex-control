@@ -3,6 +3,9 @@ WORKSPACE:=kortex-control
 KINOVA_NIC:= en7
 NOVNC:=ghcr.io/ucmercedrobotics/docker-novnc
 
+PORT:=12346
+PAYLOAD:=true
+
 ARCH := $(shell uname -m)
 PLATFORM := linux/amd64
 KORTEX_BRANCH:=humble
@@ -14,7 +17,8 @@ ifneq (,$(filter $(ARCH),arm64 aarch64))
 	KORTEX_BRANCH:=ARMv8
 	ARCH_TAG:=arm64
 	TARGET:=jetson
-	CUDA_MOUNT:= -v /usr/local/cuda-12.2:/usr/local/cuda:ro \
+	CUDA_MOUNT:= --runtime=nvidia \
+			 -v /usr/local/cuda-12.2:/usr/local/cuda:ro \
 		     -v /usr/lib/aarch64-linux-gnu:/usr/lib/aarch64-linux-gnu:ro
 endif
 
@@ -40,6 +44,12 @@ vnc:
 	--name=novnc \
 	${NOVNC}
 
+mission-interface:
+	ros2 run kortex_bt bt_runner --ros-args -p mission_port:=${PORT} -p mission_payload_length_included:=${PAYLOAD}
+
+moveto:
+	ros2 run kortex_move moveto
+
 moveit:
 	ros2 launch kortex_move robot.launch.py \
 	use_sim_time:=true \
@@ -58,7 +68,6 @@ vision:
 bash:
 	docker run -it --rm \
 	--net=host \
-	--runtime=nvidia \
 	--privileged \
 	${CUDA_MOUNT} \
 	-v .:/${WORKSPACE}:Z \

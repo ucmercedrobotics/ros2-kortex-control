@@ -1,0 +1,16 @@
+# Request
+# what kind of movement we want
+string END_EFFECTOR_LINK = "end_effector_link"
+string BASE_LINK = "base_link"
+string movement_link
+# 3D position relative to the link you choose
+geometry_msgs/Pose pose
+
+---
+# Result
+# Position is reachable or not
+bool success
+
+---
+# Feedback
+string processing_status

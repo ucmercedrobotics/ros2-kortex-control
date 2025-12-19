@@ -12,7 +12,8 @@ RUN apt update && apt install -y git wget python3-full vim net-tools netcat-trad
     curl lsb-release gnupg \
     gstreamer1.0-tools gstreamer1.0-libav libgstreamer1.0-dev \
     libgstreamer-plugins-base1.0-dev libgstreamer-plugins-good1.0-dev gstreamer1.0-plugins-good gstreamer1.0-plugins-base \
-    ros-${ROS_DISTRO}-ros-gz
+    ros-${ROS_DISTRO}-ros-gz \
+    ros-${ROS_DISTRO}-behaviortree-cpp ros-${ROS_DISTRO}-generate-parameter-library
 
 ENV RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
 
@@ -47,10 +48,15 @@ RUN cd $VISION_WS && git clone https://github.com/Kinovarobotics/ros2_kortex_vis
     colcon build
 # END vision module end
 
-WORKDIR ${WORKSPACE_ROOT}
+# install BT CPP ROS2 wrapper
+ARG BTCPP_ROS2_WORKSPACE="/btcpp_ros2_ws"
+RUN mkdir -p ${BTCPP_ROS2_WORKSPACE}
+RUN . /opt/ros/${ROS_DISTRO}/setup.sh && \
+    git clone https://github.com/BehaviorTree/BehaviorTree.ROS2.git ${BTCPP_ROS2_WORKSPACE} && \
+    cd ${BTCPP_ROS2_WORKSPACE} && \
+    colcon build --symlink-install
 
-# Copy everything into the workspace (except what's in .dockerignore)
-COPY . ${WORKSPACE_ROOT}
+WORKDIR ${WORKSPACE_ROOT}
 
 # configure DISPLAY env variable for novnc connection
 ENV DISPLAY=:2 \
@@ -62,8 +68,12 @@ ENV DISPLAY=:2 \
 RUN echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> /root/.bashrc
 RUN echo "source ${KORTEX_WS}/install/setup.bash" >> /root/.bashrc
 RUN echo "source ${VISION_WS}/install/setup.bash" >> /root/.bashrc
+RUN echo "source ${BTCPP_ROS2_WORKSPACE}/install/setup.bash" >> /root/.bashrc
 RUN echo "source /.venv/bin/activate" >> /root/.bashrc
 RUN echo "source ${WORKSPACE_ROOT}/install/setup.bash" >> /root/.bashrc
+RUN echo "export PYTHONPATH=/usr/lib/python3/dist-packages:\$PYTHONPATH" >> /root/.bashrc
+
+# TODO: add stage for x86 using official pytorch images with CUDA
 
 FROM base AS jetson
 # This is terrible to do, but they offer me no choice...

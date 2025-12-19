@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(kortex_move)
+project(kortex_bt)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -8,51 +8,49 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
-find_package(moveit_ros_planning_interface REQUIRED)
-find_package(geometry_msgs REQUIRED)
-find_package(std_msgs REQUIRED)
+find_package(rclcpp_action REQUIRED)
+find_package(behaviortree_ros2 REQUIRED)
 find_package(kortex_interfaces REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(LibXml2 REQUIRED)
 
-add_executable(hello_moveit src/hello_moveit.cpp)
-
-add_executable(moveto src/moveto.cpp)
-
-target_include_directories(hello_moveit PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>)
-
-target_include_directories(moveto PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>)
-
-ament_target_dependencies(
-  hello_moveit
-  "moveit_ros_planning_interface"
-  "rclcpp"
-  "geometry_msgs"
-  "std_msgs"
+add_executable(bt_runner
+  src/bt.cpp
+  src/mission_tcp.cpp
+  src/xml_validation.cpp
+  src/actions/check_value.cpp
+  src/actions/assert_true.cpp
+  src/actions/identify_object.cpp
+  src/actions/move_to.cpp
 )
 
-ament_target_dependencies(
-  moveto
-  "moveit_ros_planning_interface"
-  "rclcpp"
-  "rclcpp_action"
-  "geometry_msgs"
-  "std_msgs"
-  "kortex_interfaces"
+target_include_directories(bt_runner PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
 )
 
-install(TARGETS
-  hello_moveit
-  moveto
+ament_target_dependencies(bt_runner
+  rclcpp
+  behaviortree_ros2
+  kortex_interfaces
+  geometry_msgs
+  tf2
+)
+
+target_link_libraries(bt_runner
+  LibXml2::LibXml2
+)
+
+install(TARGETS bt_runner
   DESTINATION lib/${PROJECT_NAME})
 
-# Install launch files
-install(DIRECTORY
-  launch
-  config
-  DESTINATION share/${PROJECT_NAME}/
+install(DIRECTORY include/
+  DESTINATION include
+)
+
+install(DIRECTORY schemas/
+  DESTINATION share/${PROJECT_NAME}/schemas
 )
 
 if(BUILD_TESTING)

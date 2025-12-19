@@ -25,7 +25,7 @@ using namespace std::chrono_literals;
 
 class KinovaMotionServer : public rclcpp::Node {
  public:
-  using ArmMotion = kinova_action_interfaces::action::KinovaCommandVelocity;
+  using ArmMotion = kinova_interfaces::action::KinovaCommandVelocity;
   using GoalHandleArmMotion = rclcpp_action::ServerGoalHandle<ArmMotion>;
 
   explicit KinovaMotionServer(const rclcpp::NodeOptions& options)
@@ -36,7 +36,7 @@ class KinovaMotionServer : public rclcpp::Node {
     sub_opt.callback_group = callback_group_;
 
     switcher_client_ =
-        this->create_client<kinova_action_interfaces::srv::SwitchControlMode>(
+        this->create_client<kinova_interfaces::srv::SwitchControlMode>(
             "/switch_control_mode", rmw_qos_profile_services_default,
             callback_group_);
 
@@ -72,7 +72,7 @@ class KinovaMotionServer : public rclcpp::Node {
  private:
   rclcpp_action::Server<ArmMotion>::SharedPtr action_server_;
   std::shared_ptr<moveit::planning_interface::MoveGroupInterface> move_group_;
-  rclcpp::Client<kinova_action_interfaces::srv::SwitchControlMode>::SharedPtr
+  rclcpp::Client<kinova_interfaces::srv::SwitchControlMode>::SharedPtr
       switcher_client_;
   rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr twist_publisher_;
   rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr force_subscriber_;
@@ -193,7 +193,7 @@ void KinovaMotionServer::handle_accepted(
 }
 
 // Use this alias to make the code more readable
-using ArmMotion = kinova_action_interfaces::action::KinovaCommandVelocity;
+using ArmMotion = kinova_interfaces::action::KinovaCommandVelocity;
 
 void KinovaMotionServer::execute(
     const std::shared_ptr<GoalHandleArmMotion> goal_handle) {
@@ -1026,8 +1026,8 @@ bool KinovaMotionServer::switch_to_mode(const std::string& mode) {
                  "Service /switch_control_mode not available.");
     return false;
   }
-  auto request = std::make_shared<
-      kinova_action_interfaces::srv::SwitchControlMode::Request>();
+  auto request =
+      std::make_shared<kinova_interfaces::srv::SwitchControlMode::Request>();
   request->mode = mode;
   auto future = switcher_client_->async_send_request(request);
   if (future.wait_for(5s) != std::future_status::ready) {

@@ -26,6 +26,12 @@ Launch an interactive container:
 ```bash
 make bash
 ```
+Then build the ROS2 nodes
+```bash
+rosdep install --from-paths . --ignore-src -r -y
+colcon build
+source install/setup.bash
+```
 
 ## Usage
 
@@ -46,6 +52,11 @@ make config-target-network
 Then launch moveit,
 ```bash
 make moveit-target
+```
+
+Along with the MoveIt2 stack, launch the node that controls the interface to MoveIt.
+```bash
+make moveto
 ```
 
 ### Leaf Sensing
@@ -83,6 +94,12 @@ When testing on real hardware, there is a separate node for enabling camera stre
 Run this in addition to Kortex drivers.
 ```bash
 make vision
+```
+
+### Behavior Tree
+You can configure `PAYLOAD=true` if you're using `gpt-mission-planner`, which now supports payload length checking over TCP.
+```bash
+make mission-interface PORT=12346 PAYLOAD=false
 ```
 
 ## Supported Platforms

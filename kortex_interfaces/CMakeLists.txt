@@ -12,10 +12,14 @@ find_package(std_msgs REQUIRED)
 
 find_package(rosidl_default_generators REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
+  "action/AcquireSpectrum.action"
   "action/DetectObject.action"
   "action/MoveTo.action"
   "action/ProcessTarget.action"
+  "action/SegmentLeaves.action"
   "msg/LeafPoseArrays.msg"
+  "msg/NanoSpec.msg"
+  "srv/GetSpectrum.srv"
   DEPENDENCIES geometry_msgs std_msgs
 )
 

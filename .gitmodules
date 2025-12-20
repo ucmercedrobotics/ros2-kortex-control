@@ -1,3 +1,6 @@
+[submodule "nanospec"]
+	path = nanospec
+	url = https://github.com/mehradmrt/nanoLambda_ros2_driver.git
 [submodule "kortex_bt/schemas"]
 	path = kortex_bt/schemas
 	url = git@github.com:ucmercedrobotics/gpt-mission-planner-schemas.git

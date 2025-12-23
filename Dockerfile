@@ -1,6 +1,7 @@
 ARG ROS_DISTRO=humble
+ARG BASE_IMAGE=ghcr.io/sloretz/ros:${ROS_DISTRO}-desktop-full-2025-12-07
 
-FROM ghcr.io/sloretz/ros:${ROS_DISTRO}-desktop-full AS base
+FROM ${BASE_IMAGE} AS base
 
 ARG PACKAGE_NAME="kortex-control"
 ARG WORKSPACE_ROOT="/${PACKAGE_NAME}"

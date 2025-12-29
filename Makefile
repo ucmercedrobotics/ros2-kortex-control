@@ -18,8 +18,7 @@ ifneq (,$(filter $(ARCH),arm64 aarch64))
 	ARCH_TAG:=arm64
 	TARGET:=jetson
 	CUDA_MOUNT:= --runtime=nvidia \
-			 -v /usr/local/cuda-12.2:/usr/local/cuda:ro \
-		     -v /usr/lib/aarch64-linux-gnu:/usr/lib/aarch64-linux-gnu:ro
+			 -v /usr/local/cuda-12.2:/usr/local/cuda:ro
 endif
 
 repo-init:
@@ -70,6 +69,7 @@ bash:
 	--net=host \
 	--privileged \
 	${CUDA_MOUNT} \
+	-v /dev/:/dev/ \
 	-v .:/${WORKSPACE}:Z \
 	-v ~/.ssh:/root/.ssh:ro \
 	${IMAGE}:${ARCH_TAG} bash

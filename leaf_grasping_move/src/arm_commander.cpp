@@ -10,6 +10,7 @@
 #include <rclcpp_action/rclcpp_action.hpp>
 
 #include "control_msgs/action/gripper_command.hpp"
+#include "custom_interfaces/srv/get_spectrum.hpp"
 #include "kortex_interfaces/action/process_target.hpp"  // The new action file
 #include "moveit_msgs/msg/collision_object.hpp"
 #include "shape_msgs/msg/solid_primitive.hpp"
@@ -22,6 +23,7 @@ class ArmCommander : public rclcpp::Node {
   using ProcessTarget = kortex_interfaces::action::ProcessTarget;
   using GoalHandleProcessTarget =
       rclcpp_action::ServerGoalHandle<ProcessTarget>;
+  using GetSpectrum = custom_interfaces::srv::GetSpectrum;
 
   explicit ArmCommander()
       : Node("arm_commander",
@@ -44,6 +46,9 @@ class ArmCommander : public rclcpp::Node {
 
     this->gripper_action_client_ = rclcpp_action::create_client<GripperCommand>(
         this, "/robotiq_gripper_controller/gripper_cmd", callback_group_);
+
+    this->spectrum_client_ =
+        this->create_client<GetSpectrum>("/get_spectrum", rmw_qos_profile_services_default, callback_group_);
 
     // Create the Action Server
     this->action_server_ = rclcpp_action::create_server<ProcessTarget>(
@@ -182,6 +187,12 @@ class ArmCommander : public rclcpp::Node {
         feedback->status = "Operating gripper at pose " + std::to_string(i + 1);
         goal_handle->publish_feedback(feedback);
         operateGripper(0.8);
+
+        // Call the spectrum service while the gripper is closed
+        feedback->status = "Acquiring spectrum data...";
+        goal_handle->publish_feedback(feedback);
+        callGetSpectrumService();
+
         // close the gripper for 5 seconds
         this->get_clock()->sleep_for(std::chrono::seconds(5));
         operateGripper(0.0);
@@ -382,11 +393,40 @@ class ArmCommander : public rclcpp::Node {
     }
   }
 
+  // Function to call the spectrum service
+  void callGetSpectrumService() {
+    if (!spectrum_client_->wait_for_service(std::chrono::seconds(5))) {
+      RCLCPP_WARN(this->get_logger(),
+                  "GetSpectrum service not available after waiting");
+      return;
+    }
+
+    auto request = std::make_shared<GetSpectrum::Request>();
+    RCLCPP_INFO(this->get_logger(), "Calling GetSpectrum service...");
+
+    auto future = spectrum_client_->async_send_request(request);
+    auto result = future.get();
+
+    RCLCPP_INFO(this->get_logger(),
+                "GetSpectrum service returned %zu wavelengths and %zu spectrum values",
+                result->wavelengths.size(), result->spectrum.size());
+
+    // Log the first few values if available
+    if (!result->wavelengths.empty() && !result->spectrum.empty()) {
+      size_t num_to_log = std::min(static_cast<size_t>(5), result->wavelengths.size());
+      for (size_t i = 0; i < num_to_log; ++i) {
+        RCLCPP_INFO(this->get_logger(), "  Wavelength[%zu]: %u, Spectrum[%zu]: %.4f",
+                    i, result->wavelengths[i], i, result->spectrum[i]);
+      }
+    }
+  }
+
   std::shared_ptr<moveit::planning_interface::MoveGroupInterface> move_group_;
   std::shared_ptr<moveit::planning_interface::PlanningSceneInterface>
       planning_scene_interface_;
   rclcpp_action::Server<ProcessTarget>::SharedPtr action_server_;
   rclcpp_action::Client<GripperCommand>::SharedPtr gripper_action_client_;
+  rclcpp::Client<GetSpectrum>::SharedPtr spectrum_client_;
   rclcpp::CallbackGroup::SharedPtr callback_group_;
 };
 

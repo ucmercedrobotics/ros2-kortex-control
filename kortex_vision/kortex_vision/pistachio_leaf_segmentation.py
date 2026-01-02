@@ -230,8 +230,9 @@ class YOLONode(Node):
                 os.path.join(self.savedir, "open_cv_original_image.jpg"), open_cv_image
             )
 
-        filtered_leaves_from_environment = self.filter_keep_leaves_only(open_cv_image)
-        open_cv_image = filtered_leaves_from_environment
+        # ------ I'm not sure if it would work in the citrus orchard ------
+        open_cv_image = self.filter_keep_leaves_only(open_cv_image)
+        # -----------------------------------------------------------------
 
         results = self.model(
             [open_cv_image],

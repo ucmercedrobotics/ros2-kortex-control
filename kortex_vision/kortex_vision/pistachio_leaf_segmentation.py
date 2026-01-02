@@ -32,6 +32,7 @@ import tf2_ros
 from geometry_msgs.msg import PoseStamped
 from kneed import KneeLocator
 
+
 class YOLONode(Node):
     def __init__(self):
         super().__init__("pistachio_leaf_segmentation")
@@ -93,10 +94,7 @@ class YOLONode(Node):
 
         # Action to trigger processing
         self._action_server = ActionServer(
-            self,
-            SegmentLeaves,
-            '/segment_leaves',
-            self.execute_callback
+            self, SegmentLeaves, "/segment_leaves", self.execute_callback
         )
         self.get_logger().info("Ready to process point clouds upon request.")
 
@@ -139,14 +137,14 @@ class YOLONode(Node):
         # self.get_logger().info('Stored a new point cloud.', throttle_duration_sec=5.0)
 
     def execute_callback(self, goal_handle):
-        self.get_logger().info('Executing goal...')
-        
+        self.get_logger().info("Executing goal...")
+
         result = SegmentLeaves.Result()
         feedback_msg = SegmentLeaves.Feedback()
 
         with self.cloud_lock:
             cloud_to_process = self.latest_point_cloud
-            self.latest_point_cloud = None 
+            self.latest_point_cloud = None
 
         if cloud_to_process is None:
             self.get_logger().warn("No point cloud available.")
@@ -164,9 +162,9 @@ class YOLONode(Node):
             goal_handle.succeed()
             result.success = True
             result.message = "Point cloud processed and poses published."
-            
+
         except Exception as e:
-            
+
             traceback.print_exc()
             result.success = False
             result.message = f"Error: {str(e)}"
@@ -178,6 +176,9 @@ class YOLONode(Node):
         """
         This function contains the entire pipeline from point cloud to pose publication.
         """
+        # Create savedir at the start so all images can be saved there
+        self.create_savedir()
+
         self.points, self.colors = self.extract_points_and_colors(msg)
         self.combined_masks, self.ordered_masks, self.confs = self.extract_masks()
         self.combined_masks_filtered, self.masks_xyzs = self.extract_masks_xyzs()
@@ -195,7 +196,6 @@ class YOLONode(Node):
         # Save artifacts for debugging
         self.save_results()
         self.save_ordered_segments()
-
 
     def extract_points_and_colors(self, cloud_msg):
 
@@ -226,7 +226,9 @@ class YOLONode(Node):
 
         open_cv_image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
         if self.save_original_image:
-            cv2.imwrite("open_cv_original_image.jpg", open_cv_image)
+            cv2.imwrite(
+                os.path.join(self.savedir, "open_cv_original_image.jpg"), open_cv_image
+            )
 
         filtered_leaves_from_environment = self.filter_keep_leaves_only(open_cv_image)
         open_cv_image = filtered_leaves_from_environment
@@ -241,7 +243,9 @@ class YOLONode(Node):
         self.rgb_masked = results[0].plot()
         self.rgb_original = results[0].orig_img
         if self.save_masked_image:
-            cv2.imwrite("open_cv_masked_image.jpg", self.rgb_masked)
+            cv2.imwrite(
+                os.path.join(self.savedir, "open_cv_masked_image.jpg"), self.rgb_masked
+            )
 
         combined_masks = np.zeros((self.height, self.width), dtype=np.uint8)
         ordered_masks = []
@@ -284,7 +288,10 @@ class YOLONode(Node):
         mask = cv2.inRange(hsv_image, lower_green, upper_green)
 
         result = cv2.bitwise_and(image, image, mask=mask)
-        cv2.imwrite("open_cv_filtered_leaves_from_environment.jpg", result)
+        cv2.imwrite(
+            os.path.join(self.savedir, "open_cv_filtered_leaves_from_environment.jpg"),
+            result,
+        )
 
         return result
 
@@ -553,6 +560,29 @@ class YOLONode(Node):
 
     ##################################################################
 
+    def create_savedir(self):
+        """Create the save directory for this pipeline run."""
+        base_dir = "runs/results"
+        date_dir = os.path.join(base_dir, time.strftime("%m-%d-%Y"))
+
+        if not os.path.exists(date_dir):
+            os.makedirs(date_dir)
+
+        existing_dirs = [
+            d for d in os.listdir(date_dir) if os.path.isdir(os.path.join(date_dir, d))
+        ]
+
+        if existing_dirs:
+            existing_dirs.sort(key=lambda x: int(x.replace("results", "")))
+            last_run = int(existing_dirs[-1].replace("results", ""))
+            new_run = last_run + 1
+        else:
+            new_run = 1
+
+        self.savedir = os.path.join(date_dir, f"results{new_run}")
+        os.makedirs(self.savedir)
+        self.get_logger().info(f"Created save directory: {self.savedir}")
+
     def save_results(self):
         # Create a dictionary of the attributes to save
         results_data = {
@@ -580,26 +610,6 @@ class YOLONode(Node):
         }
 
         df = pd.DataFrame({k: [v] for k, v in results_data.items()})
-
-        base_dir = "runs/results"
-        date_dir = os.path.join(base_dir, time.strftime("%m-%d-%Y"))
-
-        if not os.path.exists(date_dir):
-            os.makedirs(date_dir)
-
-        existing_dirs = [
-            d for d in os.listdir(date_dir) if os.path.isdir(os.path.join(date_dir, d))
-        ]
-
-        if existing_dirs:
-            existing_dirs.sort(key=lambda x: int(x.replace("results", "")))
-            last_run = int(existing_dirs[-1].replace("results", ""))
-            new_run = last_run + 1
-        else:
-            new_run = 1
-
-        self.savedir = os.path.join(date_dir, f"results{new_run}")
-        os.makedirs(self.savedir)
 
         results_path = os.path.join(self.savedir, "results.json")
         df.to_json(results_path, orient="records")

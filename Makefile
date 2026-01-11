@@ -64,6 +64,19 @@ moveit-target:
 vision:
 	ros2 launch kinova_vision kinova_vision.launch.py depth_registration:=true
 
+# Leaf Grasping Pipeline
+leaf-segmentation:
+	ros2 launch kortex_vision leaf_segmentation.launch.py
+
+arm-control:
+	ros2 launch leaf_grasping_move arm_control.launch.py
+
+nanospec:
+	ros2 run nanospec NSP32_service_node
+
+trigger-segmentation:
+	ros2 action send_goal /segment_leaves kortex_interfaces/action/SegmentLeaves "{}"
+
 bash:
 	docker run -it --rm \
 	--net=host \

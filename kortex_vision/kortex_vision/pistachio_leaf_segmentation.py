@@ -231,7 +231,7 @@ class YOLONode(Node):
             )
 
         # ------ I'm not sure if it would work in the citrus orchard ------
-        open_cv_image = self.filter_keep_leaves_only(open_cv_image)
+        # open_cv_image = self.filter_keep_leaves_only(open_cv_image)
         # -----------------------------------------------------------------
 
         results = self.model(

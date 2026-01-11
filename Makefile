@@ -58,11 +58,11 @@ moveit:
 
 moveit-target:
 	ros2 launch kortex_move robot.launch.py \
-  	robot_ip:=192.168.1.10 \
+  	robot_ip:=192.168.0.10 \
 	vision:=true
 
 vision:
-	ros2 launch kinova_vision kinova_vision.launch.py depth_registration:=true
+	ros2 launch kinova_vision kinova_vision.launch.py depth_registration:=true device:=192.168.0.10
 
 # Leaf Grasping Pipeline
 leaf-segmentation:

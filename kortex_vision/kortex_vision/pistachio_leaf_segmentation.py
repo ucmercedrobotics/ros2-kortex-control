@@ -31,6 +31,7 @@ from cv_bridge import CvBridge
 import tf2_ros
 from geometry_msgs.msg import PoseStamped
 from kneed import KneeLocator
+from ament_index_python.packages import get_package_share_directory
 
 
 class YOLONode(Node):
@@ -52,9 +53,14 @@ class YOLONode(Node):
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.get_logger().info(f"Using device: {self.device}")
 
+        # Get the model path from the installed ROS2 package share directory
+        package_share = get_package_share_directory("kortex_vision")
+        model_path = os.path.join(package_share, "models", "final-pistachio-yolov8x-seg.pt")
+        self.get_logger().info(f"Loading model from: {model_path}")
+
         try:
             # self.model = SAM(self.model_path)
-            self.model = YOLO("final-pistachio-yolov8x-seg.pt")
+            self.model = YOLO(model_path)
             # Move model to GPU if available
             if self.device == "cuda":
                 self.model.to("cuda")

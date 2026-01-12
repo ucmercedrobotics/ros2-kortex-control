@@ -29,6 +29,7 @@ from kortex_interfaces.action import SegmentLeaves
 import traceback
 from cv_bridge import CvBridge
 import tf2_ros
+import tf2_geometry_msgs  # Required to register PoseStamped transform handlers
 from geometry_msgs.msg import PoseStamped
 from kneed import KneeLocator
 from ament_index_python.packages import get_package_share_directory

@@ -4,10 +4,15 @@
 #include <tf2_ros/transform_listener.h>
 
 #include <chrono>
+#include <ctime>
+#include <filesystem>
+#include <fstream>
 #include <geometry_msgs/msg/pose.hpp>
+#include <iomanip>
 #include <memory>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_action/rclcpp_action.hpp>
+#include <sstream>
 
 #include "control_msgs/action/gripper_command.hpp"
 #include "custom_interfaces/srv/get_spectrum.hpp"
@@ -338,7 +343,7 @@ class ArmCommander : public rclcpp::Node {
     box_dimensions.y = 0.75;  // The width of the workspace
     box_dimensions.z = 0.5;   // The height of the workspace
 
-    const double wall_thickness = 0.8;  // virtual walls
+    const double wall_thickness = 0.1;  // virtual walls
 
     // Create the bounding box with a single function call
     createBoundingBoxRestrictions(collision_objects, planning_frame, box_center,
@@ -411,14 +416,98 @@ class ArmCommander : public rclcpp::Node {
                 "GetSpectrum service returned %zu wavelengths and %zu spectrum values",
                 result->wavelengths.size(), result->spectrum.size());
 
-    // Log the first few values if available
+    // Save spectrum data to the latest results directory
     if (!result->wavelengths.empty() && !result->spectrum.empty()) {
-      size_t num_to_log = std::min(static_cast<size_t>(5), result->wavelengths.size());
-      for (size_t i = 0; i < num_to_log; ++i) {
-        RCLCPP_INFO(this->get_logger(), "  Wavelength[%zu]: %u, Spectrum[%zu]: %.4f",
-                    i, result->wavelengths[i], i, result->spectrum[i]);
+      saveSpectrumData(result->wavelengths, result->spectrum);
+    }
+  }
+
+  // Find the latest results directory matching the Python node's structure
+  std::string findLatestResultsDir() {
+    namespace fs = std::filesystem;
+
+    // Get today's date in MM-DD-YYYY format (matching Python's strftime("%m-%d-%Y"))
+    auto now = std::chrono::system_clock::now();
+    auto time_t_now = std::chrono::system_clock::to_time_t(now);
+    std::stringstream date_ss;
+    date_ss << std::put_time(std::localtime(&time_t_now), "%m-%d-%Y");
+    std::string date_str = date_ss.str();
+
+    fs::path base_dir = "runs/results";
+    fs::path date_dir = base_dir / date_str;
+
+    if (!fs::exists(date_dir)) {
+      RCLCPP_WARN(this->get_logger(), "Date directory does not exist: %s",
+                  date_dir.string().c_str());
+      return "";
+    }
+
+    // Find the latest resultsN directory
+    int latest_run = 0;
+    for (const auto& entry : fs::directory_iterator(date_dir)) {
+      if (entry.is_directory()) {
+        std::string dir_name = entry.path().filename().string();
+        if (dir_name.rfind("results", 0) == 0) {  // starts with "results"
+          try {
+            int run_num = std::stoi(dir_name.substr(7));  // extract number after "results"
+            if (run_num > latest_run) {
+              latest_run = run_num;
+            }
+          } catch (...) {
+            continue;
+          }
+        }
       }
     }
+
+    if (latest_run == 0) {
+      RCLCPP_WARN(this->get_logger(), "No results directories found in: %s",
+                  date_dir.string().c_str());
+      return "";
+    }
+
+    fs::path latest_dir = date_dir / ("results" + std::to_string(latest_run));
+    return latest_dir.string();
+  }
+
+  // Function to save spectrum data to a CSV file
+  void saveSpectrumData(const std::vector<uint16_t>& wavelengths,
+                        const std::vector<double>& spectrum) {
+    std::string save_dir = findLatestResultsDir();
+
+    if (save_dir.empty()) {
+      RCLCPP_ERROR(this->get_logger(),
+                   "Could not find results directory. Spectrum data not saved.");
+      return;
+    }
+
+    // Generate timestamp for unique filename
+    auto now = std::chrono::system_clock::now();
+    auto time_t_now = std::chrono::system_clock::to_time_t(now);
+    std::stringstream ts_ss;
+    ts_ss << std::put_time(std::localtime(&time_t_now), "%H%M%S");
+
+    std::string filename = save_dir + "/spectrum_" + ts_ss.str() + ".csv";
+
+    std::ofstream file(filename);
+    if (!file.is_open()) {
+      RCLCPP_ERROR(this->get_logger(), "Failed to open file for writing: %s",
+                   filename.c_str());
+      return;
+    }
+
+    // Write header
+    file << "wavelength,spectrum\n";
+
+    // Write data
+    size_t num_values = std::min(wavelengths.size(), spectrum.size());
+    for (size_t i = 0; i < num_values; ++i) {
+      file << wavelengths[i] << "," << std::fixed << std::setprecision(6)
+           << spectrum[i] << "\n";
+    }
+
+    file.close();
+    RCLCPP_INFO(this->get_logger(), "Spectrum data saved to: %s", filename.c_str());
   }
 
   std::shared_ptr<moveit::planning_interface::MoveGroupInterface> move_group_;

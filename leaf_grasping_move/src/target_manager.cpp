@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_action/rclcpp_action.hpp>
 
@@ -15,6 +16,11 @@ class TargetManager : public rclcpp::Node {
       : Node("target_manager",
              rclcpp::NodeOptions()
                  .automatically_declare_parameters_from_overrides(true)) {
+    // Declare parameter for max number of targets to process (default: 1)
+    this->declare_parameter<int>("max_targets", 1);
+    max_targets_ = this->get_parameter("max_targets").as_int();
+    RCLCPP_INFO(this->get_logger(), "Max targets to process: %d", max_targets_);
+
     // Action client to send goals to the ArmCommander
     this->action_client_ =
         rclcpp_action::create_client<ProcessTarget>(this, "process_target");
@@ -46,6 +52,7 @@ class TargetManager : public rclcpp::Node {
   kortex_interfaces::msg::LeafPoseArrays::SharedPtr current_target_list_;
   size_t current_target_index_ = 0;
   size_t successful_target_count_ = 0;
+  int max_targets_ = 1;  // Max number of leaves to process (default: 1)
 
   // This callback saves the targets and starts the processing sequence.
   void topic_callback(
@@ -68,8 +75,7 @@ class TargetManager : public rclcpp::Node {
 
     this->current_target_list_ = msg;
     this->current_target_index_ = 0;
-    // I didn't restart the count here to preserve history across multiple
-    // messages. this->successful_target_count_ = 0;
+    this->successful_target_count_ = 0;
 
     // Kick off the processing by sending the first goal.
     send_next_goal();
@@ -78,17 +84,21 @@ class TargetManager : public rclcpp::Node {
   // This function sends a single goal to the arm commander based on the current
   // index.
   void send_next_goal() {
-    // If we have processed all targets in the list, publish completion and
-    // stop.
+    size_t total_detected = current_target_list_ ? current_target_list_->poses1.size() : 0;
+
+    // Stop if: we've achieved max_targets successful grasps OR we've run out of leaves to try
     if (!current_target_list_ ||
-        current_target_index_ >= current_target_list_->poses1.size()) {
+        static_cast<int>(successful_target_count_) >= max_targets_ ||
+        current_target_index_ >= total_detected) {
       RCLCPP_INFO(this->get_logger(),
                   "-----------------------------------------");
-      RCLCPP_INFO(this->get_logger(), "All targets have been processed.");
+      RCLCPP_INFO(this->get_logger(), "Target processing complete.");
       RCLCPP_INFO(this->get_logger(),
-                  "Final Result: %zu out of %zu targets were successful.",
+                  "Final Result: %zu successful grasps (target=%d, attempted=%zu, total_detected=%zu).",
                   successful_target_count_,
-                  current_target_list_->poses1.size());
+                  max_targets_,
+                  current_target_index_,
+                  total_detected);
       RCLCPP_INFO(this->get_logger(),
                   "-----------------------------------------");
 
@@ -100,11 +110,11 @@ class TargetManager : public rclcpp::Node {
       return;
     }
 
-    size_t num_targets = current_target_list_->poses1.size();
+    size_t num_targets = total_detected;
     RCLCPP_INFO(this->get_logger(),
                 "-----------------------------------------");
-    RCLCPP_INFO(this->get_logger(), "Processing Target %zu of %zu",
-                current_target_index_ + 1, num_targets);
+    RCLCPP_INFO(this->get_logger(), "Attempting leaf %zu of %zu (successful grasps: %zu/%d)",
+                current_target_index_ + 1, num_targets, successful_target_count_, max_targets_);
 
     if (!action_client_->wait_for_action_server(std::chrono::seconds(10))) {
       RCLCPP_ERROR(

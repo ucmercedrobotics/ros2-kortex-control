@@ -329,7 +329,7 @@ class ArmCommander : public rclcpp::Node {
     wall.primitives.push_back(primitive_wall);
     wall.primitive_poses.push_back(wall_pose);
     wall.operation = wall.ADD;
-    collision_objects.push_back(wall);
+    // collision_objects.push_back(wall);
 
     // Define the properties of the virtual bounding box ***to restrict the
     // workspace***
@@ -346,8 +346,8 @@ class ArmCommander : public rclcpp::Node {
     const double wall_thickness = 0.1;  // virtual walls
 
     // Create the bounding box with a single function call
-    createBoundingBoxRestrictions(collision_objects, planning_frame, box_center,
-                                  box_dimensions, wall_thickness);
+    // createBoundingBoxRestrictions(collision_objects, planning_frame, box_center,
+    //                               box_dimensions, wall_thickness);
 
     RCLCPP_INFO(this->get_logger(), "Adding collision objects to the world");
     planning_scene_interface_->addCollisionObjects(collision_objects);

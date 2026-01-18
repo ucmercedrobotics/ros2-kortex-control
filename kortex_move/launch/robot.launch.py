@@ -85,25 +85,31 @@ def launch_setup(context, *args, **kwargs):
         executable="move_group",
         output="screen",
         parameters=[moveit_config.to_dict(), kinematics_yaml],
+        remappings=[
+            ("/joint_states", "/kinova/joint_states"),
+        ],
     )
 
     # Static TF
     static_tf = Node(
         package="tf2_ros",
         executable="static_transform_publisher",
-        name="static_transform_publisher",
+        name="kinova_static_transform_publisher",
         output="log",
         arguments=["--frame-id", "world", "--child-frame-id", "base_link"],
     )
 
-    # Publish TF
+    # Publish TF - namespaced to avoid conflict with Amiga's robot_state_publisher
     robot_state_publisher = Node(
         package="robot_state_publisher",
         executable="robot_state_publisher",
-        name="robot_state_publisher",
+        name="kinova_robot_state_publisher",
         output="both",
         parameters=[
             moveit_config.robot_description,
+        ],
+        remappings=[
+            ("/joint_states", "/kinova/joint_states"),
         ],
     )
 
@@ -117,7 +123,10 @@ def launch_setup(context, *args, **kwargs):
         package="controller_manager",
         executable="ros2_control_node",
         parameters=[ros2_controllers_path],
-        remappings=[("/controller_manager/robot_description", "/robot_description")],
+        remappings=[
+            ("/controller_manager/robot_description", "/robot_description"),
+            ("/joint_states", "/kinova/joint_states"),
+        ],
         output="both",
     )
 
@@ -162,6 +171,9 @@ def launch_setup(context, *args, **kwargs):
             moveit_config.robot_description,
             moveit_config.robot_description_semantic,
             moveit_config.robot_description_kinematics,
+        ],
+        remappings=[
+            ("/joint_states", "/kinova/joint_states"),
         ],
     )
 

@@ -26,7 +26,7 @@ repo-init:
 	pre-commit install
 
 config-target-network:
-	sudo ifconfig ${KINOVA_NIC} 192.168.1.11 netmask 255.255.255.0
+	sudo ifconfig ${KINOVA_NIC} 10.55.155.11 netmask 255.255.255.0
 
 push:
 	docker build --platform ${PLATFORM} -t ${IMAGE}:${ARCH_TAG} --target ${TARGET} . --push
@@ -58,11 +58,11 @@ moveit:
 
 moveit-target:
 	ros2 launch kortex_move robot.launch.py \
-  	robot_ip:=192.168.0.10 \
+  	robot_ip:=10.55.155.10 \
 	vision:=true
 
 vision:
-	ros2 launch kinova_vision kinova_vision.launch.py depth_registration:=true device:=192.168.0.10
+	ros2 launch kinova_vision kinova_vision.launch.py depth_registration:=true device:=10.55.155.10
 
 # Leaf Grasping Pipeline
 leaf-segmentation:

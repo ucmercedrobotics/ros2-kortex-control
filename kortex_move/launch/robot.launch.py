@@ -87,6 +87,7 @@ def launch_setup(context, *args, **kwargs):
         parameters=[moveit_config.to_dict(), kinematics_yaml],
         remappings=[
             ("/joint_states", "/kinova/joint_states"),
+            ("/robot_description", "/kinova/robot_description"),
         ],
     )
 
@@ -110,6 +111,7 @@ def launch_setup(context, *args, **kwargs):
         ],
         remappings=[
             ("/joint_states", "/kinova/joint_states"),
+            ("/robot_description", "/kinova/robot_description"),
         ],
     )
 
@@ -124,7 +126,7 @@ def launch_setup(context, *args, **kwargs):
         executable="ros2_control_node",
         parameters=[ros2_controllers_path],
         remappings=[
-            ("/controller_manager/robot_description", "/robot_description"),
+            ("/controller_manager/robot_description", "/kinova/robot_description"),
             ("/joint_states", "/kinova/joint_states"),
         ],
         output="both",
@@ -174,6 +176,7 @@ def launch_setup(context, *args, **kwargs):
         ],
         remappings=[
             ("/joint_states", "/kinova/joint_states"),
+            ("/robot_description", "/kinova/robot_description"),
         ],
     )
 

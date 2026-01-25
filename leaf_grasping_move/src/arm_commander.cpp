@@ -45,6 +45,9 @@ class ArmCommander : public rclcpp::Node {
     move_group_ = std::make_shared<MoveGroupInterface>(
         std::static_pointer_cast<rclcpp::Node>(shared_from_this()),
         "manipulator");
+    move_group_->setPlanningPipelineId(
+        "pilz_industrial_motion_planner");
+    move_group_->setPlannerId("PTP");
 
     planning_scene_interface_ =
         std::make_shared<moveit::planning_interface::PlanningSceneInterface>();

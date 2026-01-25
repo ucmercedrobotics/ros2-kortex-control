@@ -477,10 +477,14 @@ class YOLONode(Node):
 
             orientation_in_camera = R.from_matrix(axis_set)
             quat_camera = orientation_in_camera.as_quat()
-            pose_in_camera.pose.orientation.x = quat_camera[0]
-            pose_in_camera.pose.orientation.y = quat_camera[1]
-            pose_in_camera.pose.orientation.z = quat_camera[2]
-            pose_in_camera.pose.orientation.w = quat_camera[3]
+            # pose_in_camera.pose.orientation.x = quat_camera[0]
+            # pose_in_camera.pose.orientation.y = quat_camera[1]
+            # pose_in_camera.pose.orientation.z = quat_camera[2]
+            # pose_in_camera.pose.orientation.w = quat_camera[3]
+            pose_in_camera.pose.orientation.x = 0.0
+            pose_in_camera.pose.orientation.y = 0.0
+            pose_in_camera.pose.orientation.z = 1.0
+            pose_in_camera.pose.orientation.w = 0.0
 
             try:
                 pose_in_base_link = self.tf_buffer.transform(

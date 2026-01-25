@@ -194,7 +194,7 @@ class ArmCommander : public rclcpp::Node {
 
         feedback->status = "Operating gripper at pose " + std::to_string(i + 1);
         goal_handle->publish_feedback(feedback);
-        operateGripper(0.8);
+        operateGripper(0.34);
 
         // Call the spectrum service while the gripper is closed
         feedback->status = "Acquiring spectrum data...";

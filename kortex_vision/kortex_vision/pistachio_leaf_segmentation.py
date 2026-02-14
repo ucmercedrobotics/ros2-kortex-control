@@ -149,6 +149,8 @@ class YOLONode(Node):
         result = SegmentLeaves.Result()
         feedback_msg = SegmentLeaves.Feedback()
 
+        rclpy.spin_once(self, timeout_sec=2.0)
+
         with self.cloud_lock:
             cloud_to_process = self.latest_point_cloud
             self.latest_point_cloud = None
@@ -166,9 +168,17 @@ class YOLONode(Node):
 
             self.run_full_pipeline(cloud_to_process)
 
+            # Check if any leaves were detected
+            if len(self.midpoints) == 0:
+                self.get_logger().warn("No leaves detected in the point cloud.")
+                result.success = False
+                result.message = "No leaves detected in the point cloud."
+                goal_handle.abort()
+                return result
+
             goal_handle.succeed()
             result.success = True
-            result.message = "Point cloud processed and poses published."
+            result.message = f"Point cloud processed. {len(self.midpoints)} leaves detected and poses published."
 
         except Exception as e:
 

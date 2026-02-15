@@ -149,8 +149,6 @@ class YOLONode(Node):
         result = SegmentLeaves.Result()
         feedback_msg = SegmentLeaves.Feedback()
 
-        rclpy.spin_once(self, timeout_sec=2.0)
-
         with self.cloud_lock:
             cloud_to_process = self.latest_point_cloud
             self.latest_point_cloud = None

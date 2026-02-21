@@ -469,7 +469,7 @@ class YOLONode(Node):
         final_target_frame = "base_link"
 
         # This is the vector from the 'end_effector_link' to the fingers.
-        FINGER_OFFSET_Z = 0.1438
+        FINGER_OFFSET_Z = 0.166
         offset_in_ee_frame = np.array([0.0, 0.0, FINGER_OFFSET_Z])
 
         for i, axis_set in enumerate(self.axes):

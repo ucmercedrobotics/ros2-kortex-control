@@ -21,6 +21,7 @@ from rclpy.node import Node
 from rclpy.duration import Duration
 from rclpy.time import Time
 from rclpy.qos import QoSProfile, DurabilityPolicy, ReliabilityPolicy, HistoryPolicy
+from std_msgs.msg import String
 from sensor_msgs.msg import PointCloud2
 from geometry_msgs.msg import Pose, PoseArray
 from kortex_interfaces.msg import LeafPoseArrays
@@ -91,6 +92,14 @@ class YOLONode(Node):
             pointcloud_qos,
         )
 
+        # Add PointCloud2 subscriber
+        self.arm_task_status_sub = self.create_subscription(
+            String,
+            "/arm_task_status",
+            self.arm_task_status,
+            pointcloud_qos,
+        )
+
         self.pose_array_publisher = self.create_publisher(
             PoseArray, "/target_leaves", qos_profile
         )
@@ -134,6 +143,16 @@ class YOLONode(Node):
 
         self.processed = False
         self.savedir = None
+
+        self.arm_move_finished = False
+
+    def arm_task_status(self, msg):
+        """
+        This callback simply stores the most recent point cloud message.
+        """
+        if msg.data == "COMPLETE":
+            self.arm_move_finished = True
+        self.get_logger().info('Arm move finished...')
 
     def pointcloud_storage_callback(self, msg: PointCloud2):
         """
@@ -207,6 +226,11 @@ class YOLONode(Node):
 
         # Publish the results
         self.publish_leaf_pose_arrays()
+
+        while not self.arm_move_finished:
+            time.sleep(1.0)
+
+        self.arm_move_finished = False
 
         # Save artifacts for debugging
         self.save_results()

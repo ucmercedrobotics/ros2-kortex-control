@@ -12,6 +12,7 @@ setup(
         ("share/ament_index/resource_index/packages", ["resource/" + package_name]),
         ("share/" + package_name, ["package.xml"]),
         (os.path.join("share", package_name, "launch"), glob("launch/*")),
+        (os.path.join("share", package_name, "models"), ["resource/final-pistachio-yolov8x-seg.pt", "resource/citrus.pt"]),
     ],
     install_requires=["setuptools"],
     zip_safe=True,

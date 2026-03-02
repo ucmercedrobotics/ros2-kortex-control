@@ -17,6 +17,7 @@ find_package(tf2_ros REQUIRED)
 find_package(control_msgs REQUIRED)
 find_package(moveit_msgs REQUIRED)
 find_package(shape_msgs REQUIRED)
+find_package(custom_interfaces REQUIRED)
 
 
 # Define the C++ executables
@@ -41,6 +42,7 @@ ament_target_dependencies(arm_commander
   moveit_msgs
   shape_msgs
   kortex_interfaces
+  custom_interfaces
 )
 
 ament_target_dependencies(target_manager

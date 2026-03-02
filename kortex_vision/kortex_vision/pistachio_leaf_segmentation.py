@@ -21,6 +21,7 @@ from rclpy.node import Node
 from rclpy.duration import Duration
 from rclpy.time import Time
 from rclpy.qos import QoSProfile, DurabilityPolicy, ReliabilityPolicy, HistoryPolicy
+from std_msgs.msg import String
 from sensor_msgs.msg import PointCloud2
 from geometry_msgs.msg import Pose, PoseArray
 from kortex_interfaces.msg import LeafPoseArrays
@@ -29,8 +30,11 @@ from kortex_interfaces.action import SegmentLeaves
 import traceback
 from cv_bridge import CvBridge
 import tf2_ros
+import tf2_geometry_msgs  # Required to register PoseStamped transform handlers
 from geometry_msgs.msg import PoseStamped
 from kneed import KneeLocator
+from ament_index_python.packages import get_package_share_directory
+
 
 class YOLONode(Node):
     def __init__(self):
@@ -51,9 +55,14 @@ class YOLONode(Node):
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.get_logger().info(f"Using device: {self.device}")
 
+        # Get the model path from the installed ROS2 package share directory
+        package_share = get_package_share_directory("kortex_vision")
+        model_path = os.path.join(package_share, "models", "citrus.pt")
+        self.get_logger().info(f"Loading model from: {model_path}")
+
         try:
             # self.model = SAM(self.model_path)
-            self.model = YOLO("final-pistachio-yolov8x-seg.pt")
+            self.model = YOLO(model_path)
             # Move model to GPU if available
             if self.device == "cuda":
                 self.model.to("cuda")
@@ -83,6 +92,14 @@ class YOLONode(Node):
             pointcloud_qos,
         )
 
+        # Add PointCloud2 subscriber
+        self.arm_task_status_sub = self.create_subscription(
+            String,
+            "/arm_task_status",
+            self.arm_task_status,
+            pointcloud_qos,
+        )
+
         self.pose_array_publisher = self.create_publisher(
             PoseArray, "/target_leaves", qos_profile
         )
@@ -93,10 +110,7 @@ class YOLONode(Node):
 
         # Action to trigger processing
         self._action_server = ActionServer(
-            self,
-            SegmentLeaves,
-            '/segment_leaves',
-            self.execute_callback
+            self, SegmentLeaves, "/segment_leaves", self.execute_callback
         )
         self.get_logger().info("Ready to process point clouds upon request.")
 
@@ -130,6 +144,16 @@ class YOLONode(Node):
         self.processed = False
         self.savedir = None
 
+        self.arm_move_finished = False
+
+    def arm_task_status(self, msg):
+        """
+        This callback simply stores the most recent point cloud message.
+        """
+        if msg.data == "COMPLETE":
+            self.arm_move_finished = True
+        self.get_logger().info('Arm move finished...')
+
     def pointcloud_storage_callback(self, msg: PointCloud2):
         """
         This callback simply stores the most recent point cloud message.
@@ -139,14 +163,14 @@ class YOLONode(Node):
         # self.get_logger().info('Stored a new point cloud.', throttle_duration_sec=5.0)
 
     def execute_callback(self, goal_handle):
-        self.get_logger().info('Executing goal...')
-        
+        self.get_logger().info("Executing goal...")
+
         result = SegmentLeaves.Result()
         feedback_msg = SegmentLeaves.Feedback()
 
         with self.cloud_lock:
             cloud_to_process = self.latest_point_cloud
-            self.latest_point_cloud = None 
+            self.latest_point_cloud = None
 
         if cloud_to_process is None:
             self.get_logger().warn("No point cloud available.")
@@ -161,12 +185,20 @@ class YOLONode(Node):
 
             self.run_full_pipeline(cloud_to_process)
 
+            # Check if any leaves were detected
+            if len(self.midpoints) == 0:
+                self.get_logger().warn("No leaves detected in the point cloud.")
+                result.success = False
+                result.message = "No leaves detected in the point cloud."
+                goal_handle.abort()
+                return result
+
             goal_handle.succeed()
             result.success = True
-            result.message = "Point cloud processed and poses published."
-            
+            result.message = f"Point cloud processed. {len(self.midpoints)} leaves detected and poses published."
+
         except Exception as e:
-            
+
             traceback.print_exc()
             result.success = False
             result.message = f"Error: {str(e)}"
@@ -178,6 +210,9 @@ class YOLONode(Node):
         """
         This function contains the entire pipeline from point cloud to pose publication.
         """
+        # Create savedir at the start so all images can be saved there
+        self.create_savedir()
+
         self.points, self.colors = self.extract_points_and_colors(msg)
         self.combined_masks, self.ordered_masks, self.confs = self.extract_masks()
         self.combined_masks_filtered, self.masks_xyzs = self.extract_masks_xyzs()
@@ -192,10 +227,14 @@ class YOLONode(Node):
         # Publish the results
         self.publish_leaf_pose_arrays()
 
+        while not self.arm_move_finished:
+            time.sleep(1.0)
+
+        self.arm_move_finished = False
+
         # Save artifacts for debugging
         self.save_results()
         self.save_ordered_segments()
-
 
     def extract_points_and_colors(self, cloud_msg):
 
@@ -226,10 +265,13 @@ class YOLONode(Node):
 
         open_cv_image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
         if self.save_original_image:
-            cv2.imwrite("open_cv_original_image.jpg", open_cv_image)
+            cv2.imwrite(
+                os.path.join(self.savedir, "open_cv_original_image.jpg"), open_cv_image
+            )
 
-        filtered_leaves_from_environment = self.filter_keep_leaves_only(open_cv_image)
-        open_cv_image = filtered_leaves_from_environment
+        # ------ I'm not sure if it would work in the citrus orchard ------
+        # open_cv_image = self.filter_keep_leaves_only(open_cv_image)
+        # -----------------------------------------------------------------
 
         results = self.model(
             [open_cv_image],
@@ -241,7 +283,9 @@ class YOLONode(Node):
         self.rgb_masked = results[0].plot()
         self.rgb_original = results[0].orig_img
         if self.save_masked_image:
-            cv2.imwrite("open_cv_masked_image.jpg", self.rgb_masked)
+            cv2.imwrite(
+                os.path.join(self.savedir, "open_cv_masked_image.jpg"), self.rgb_masked
+            )
 
         combined_masks = np.zeros((self.height, self.width), dtype=np.uint8)
         ordered_masks = []
@@ -284,7 +328,10 @@ class YOLONode(Node):
         mask = cv2.inRange(hsv_image, lower_green, upper_green)
 
         result = cv2.bitwise_and(image, image, mask=mask)
-        cv2.imwrite("open_cv_filtered_leaves_from_environment.jpg", result)
+        cv2.imwrite(
+            os.path.join(self.savedir, "open_cv_filtered_leaves_from_environment.jpg"),
+            result,
+        )
 
         return result
 
@@ -446,7 +493,7 @@ class YOLONode(Node):
         final_target_frame = "base_link"
 
         # This is the vector from the 'end_effector_link' to the fingers.
-        FINGER_OFFSET_Z = 0.1438
+        FINGER_OFFSET_Z = 0.166
         offset_in_ee_frame = np.array([0.0, 0.0, FINGER_OFFSET_Z])
 
         for i, axis_set in enumerate(self.axes):
@@ -462,10 +509,14 @@ class YOLONode(Node):
 
             orientation_in_camera = R.from_matrix(axis_set)
             quat_camera = orientation_in_camera.as_quat()
-            pose_in_camera.pose.orientation.x = quat_camera[0]
-            pose_in_camera.pose.orientation.y = quat_camera[1]
-            pose_in_camera.pose.orientation.z = quat_camera[2]
-            pose_in_camera.pose.orientation.w = quat_camera[3]
+            # pose_in_camera.pose.orientation.x = quat_camera[0]
+            # pose_in_camera.pose.orientation.y = quat_camera[1]
+            # pose_in_camera.pose.orientation.z = quat_camera[2]
+            # pose_in_camera.pose.orientation.w = quat_camera[3]
+            pose_in_camera.pose.orientation.x = 0.0
+            pose_in_camera.pose.orientation.y = 0.0
+            pose_in_camera.pose.orientation.z = 1.0
+            pose_in_camera.pose.orientation.w = 0.0
 
             try:
                 pose_in_base_link = self.tf_buffer.transform(
@@ -553,6 +604,29 @@ class YOLONode(Node):
 
     ##################################################################
 
+    def create_savedir(self):
+        """Create the save directory for this pipeline run."""
+        base_dir = "runs/results"
+        date_dir = os.path.join(base_dir, time.strftime("%m-%d-%Y"))
+
+        if not os.path.exists(date_dir):
+            os.makedirs(date_dir)
+
+        existing_dirs = [
+            d for d in os.listdir(date_dir) if os.path.isdir(os.path.join(date_dir, d))
+        ]
+
+        if existing_dirs:
+            existing_dirs.sort(key=lambda x: int(x.replace("results", "")))
+            last_run = int(existing_dirs[-1].replace("results", ""))
+            new_run = last_run + 1
+        else:
+            new_run = 1
+
+        self.savedir = os.path.join(date_dir, f"results{new_run}")
+        os.makedirs(self.savedir)
+        self.get_logger().info(f"Created save directory: {self.savedir}")
+
     def save_results(self):
         # Create a dictionary of the attributes to save
         results_data = {
@@ -580,26 +654,6 @@ class YOLONode(Node):
         }
 
         df = pd.DataFrame({k: [v] for k, v in results_data.items()})
-
-        base_dir = "runs/results"
-        date_dir = os.path.join(base_dir, time.strftime("%m-%d-%Y"))
-
-        if not os.path.exists(date_dir):
-            os.makedirs(date_dir)
-
-        existing_dirs = [
-            d for d in os.listdir(date_dir) if os.path.isdir(os.path.join(date_dir, d))
-        ]
-
-        if existing_dirs:
-            existing_dirs.sort(key=lambda x: int(x.replace("results", "")))
-            last_run = int(existing_dirs[-1].replace("results", ""))
-            new_run = last_run + 1
-        else:
-            new_run = 1
-
-        self.savedir = os.path.join(date_dir, f"results{new_run}")
-        os.makedirs(self.savedir)
 
         results_path = os.path.join(self.savedir, "results.json")
         df.to_json(results_path, orient="records")

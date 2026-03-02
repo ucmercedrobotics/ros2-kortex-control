@@ -13,6 +13,7 @@ RUN apt update && apt install -y git wget python3-full vim net-tools netcat-trad
     curl lsb-release gnupg \
     gstreamer1.0-tools gstreamer1.0-libav libgstreamer1.0-dev \
     libgstreamer-plugins-base1.0-dev libgstreamer-plugins-good1.0-dev gstreamer1.0-plugins-good gstreamer1.0-plugins-base \
+    python3-serial \
     ros-${ROS_DISTRO}-ros-gz \
     ros-${ROS_DISTRO}-behaviortree-cpp ros-${ROS_DISTRO}-generate-parameter-library
 

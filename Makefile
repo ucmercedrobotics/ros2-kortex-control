@@ -18,8 +18,7 @@ ifneq (,$(filter $(ARCH),arm64 aarch64))
 	ARCH_TAG:=arm64
 	TARGET:=jetson
 	CUDA_MOUNT:= --runtime=nvidia \
-			 -v /usr/local/cuda-12.2:/usr/local/cuda:ro \
-		     -v /usr/lib/aarch64-linux-gnu:/usr/lib/aarch64-linux-gnu:ro
+			 -v /usr/local/cuda-12.2:/usr/local/cuda:ro
 endif
 
 repo-init:
@@ -27,7 +26,7 @@ repo-init:
 	pre-commit install
 
 config-target-network:
-	sudo ifconfig ${KINOVA_NIC} 192.168.1.11 netmask 255.255.255.0
+	sudo ifconfig ${KINOVA_NIC} 10.55.155.11 netmask 255.255.255.0
 
 push:
 	docker build --platform ${PLATFORM} -t ${IMAGE}:${ARCH_TAG} --target ${TARGET} . --push
@@ -59,17 +58,31 @@ moveit:
 
 moveit-target:
 	ros2 launch kortex_move robot.launch.py \
-  	robot_ip:=192.168.1.10 \
+  	robot_ip:=10.55.155.10 \
 	vision:=true
 
 vision:
-	ros2 launch kinova_vision kinova_vision.launch.py depth_registration:=true
+	ros2 launch kinova_vision kinova_vision.launch.py depth_registration:=true device:=10.55.155.10
+
+# Leaf Grasping Pipeline
+leaf-segmentation:
+	ros2 launch kortex_vision leaf_segmentation.launch.py
+
+arm-control:
+	ros2 launch leaf_grasping_move arm_control.launch.py
+
+nanospec:
+	ros2 run nanospec NSP32_service_node
+
+trigger-segmentation:
+	ros2 action send_goal /segment_leaves kortex_interfaces/action/SegmentLeaves "{}"
 
 bash:
 	docker run -it --rm \
 	--net=host \
 	--privileged \
 	${CUDA_MOUNT} \
+	-v /dev/:/dev/ \
 	-v .:/${WORKSPACE}:Z \
 	-v ~/.ssh:/root/.ssh:ro \
 	${IMAGE}:${ARCH_TAG} bash

@@ -4,12 +4,18 @@
 #include <tf2_ros/transform_listener.h>
 
 #include <chrono>
+#include <ctime>
+#include <filesystem>
+#include <fstream>
 #include <geometry_msgs/msg/pose.hpp>
+#include <iomanip>
 #include <memory>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_action/rclcpp_action.hpp>
+#include <sstream>
 
 #include "control_msgs/action/gripper_command.hpp"
+#include "custom_interfaces/srv/get_spectrum.hpp"
 #include "kortex_interfaces/action/process_target.hpp"  // The new action file
 #include "moveit_msgs/msg/collision_object.hpp"
 #include "shape_msgs/msg/solid_primitive.hpp"
@@ -22,6 +28,7 @@ class ArmCommander : public rclcpp::Node {
   using ProcessTarget = kortex_interfaces::action::ProcessTarget;
   using GoalHandleProcessTarget =
       rclcpp_action::ServerGoalHandle<ProcessTarget>;
+  using GetSpectrum = custom_interfaces::srv::GetSpectrum;
 
   explicit ArmCommander()
       : Node("arm_commander",
@@ -38,12 +45,18 @@ class ArmCommander : public rclcpp::Node {
     move_group_ = std::make_shared<MoveGroupInterface>(
         std::static_pointer_cast<rclcpp::Node>(shared_from_this()),
         "manipulator");
+    move_group_->setPlanningPipelineId(
+        "pilz_industrial_motion_planner");
+    move_group_->setPlannerId("PTP");
 
     planning_scene_interface_ =
         std::make_shared<moveit::planning_interface::PlanningSceneInterface>();
 
     this->gripper_action_client_ = rclcpp_action::create_client<GripperCommand>(
         this, "/robotiq_gripper_controller/gripper_cmd", callback_group_);
+
+    this->spectrum_client_ =
+        this->create_client<GetSpectrum>("/get_spectrum", rmw_qos_profile_services_default, callback_group_);
 
     // Create the Action Server
     this->action_server_ = rclcpp_action::create_server<ProcessTarget>(
@@ -181,7 +194,13 @@ class ArmCommander : public rclcpp::Node {
 
         feedback->status = "Operating gripper at pose " + std::to_string(i + 1);
         goal_handle->publish_feedback(feedback);
-        operateGripper(0.8);
+        operateGripper(0.4);
+
+        // Call the spectrum service while the gripper is closed
+        feedback->status = "Acquiring spectrum data...";
+        goal_handle->publish_feedback(feedback);
+        callGetSpectrumService();
+
         // close the gripper for 5 seconds
         this->get_clock()->sleep_for(std::chrono::seconds(5));
         operateGripper(0.0);
@@ -313,7 +332,7 @@ class ArmCommander : public rclcpp::Node {
     wall.primitives.push_back(primitive_wall);
     wall.primitive_poses.push_back(wall_pose);
     wall.operation = wall.ADD;
-    collision_objects.push_back(wall);
+    // collision_objects.push_back(wall);
 
     // Define the properties of the virtual bounding box ***to restrict the
     // workspace***
@@ -327,11 +346,11 @@ class ArmCommander : public rclcpp::Node {
     box_dimensions.y = 0.75;  // The width of the workspace
     box_dimensions.z = 0.5;   // The height of the workspace
 
-    const double wall_thickness = 0.8;  // virtual walls
+    const double wall_thickness = 0.1;  // virtual walls
 
     // Create the bounding box with a single function call
-    createBoundingBoxRestrictions(collision_objects, planning_frame, box_center,
-                                  box_dimensions, wall_thickness);
+    // createBoundingBoxRestrictions(collision_objects, planning_frame, box_center,
+    //                               box_dimensions, wall_thickness);
 
     RCLCPP_INFO(this->get_logger(), "Adding collision objects to the world");
     planning_scene_interface_->addCollisionObjects(collision_objects);
@@ -382,11 +401,124 @@ class ArmCommander : public rclcpp::Node {
     }
   }
 
+  // Function to call the spectrum service
+  void callGetSpectrumService() {
+    if (!spectrum_client_->wait_for_service(std::chrono::seconds(5))) {
+      RCLCPP_WARN(this->get_logger(),
+                  "GetSpectrum service not available after waiting");
+      return;
+    }
+
+    auto request = std::make_shared<GetSpectrum::Request>();
+    RCLCPP_INFO(this->get_logger(), "Calling GetSpectrum service...");
+
+    auto future = spectrum_client_->async_send_request(request);
+    auto result = future.get();
+
+    RCLCPP_INFO(this->get_logger(),
+                "GetSpectrum service returned %zu wavelengths and %zu spectrum values",
+                result->wavelengths.size(), result->spectrum.size());
+
+    // Save spectrum data to the latest results directory
+    if (!result->wavelengths.empty() && !result->spectrum.empty()) {
+      saveSpectrumData(result->wavelengths, result->spectrum);
+    }
+  }
+
+  // Find the latest results directory matching the Python node's structure
+  std::string findLatestResultsDir() {
+    namespace fs = std::filesystem;
+
+    // Get today's date in MM-DD-YYYY format (matching Python's strftime("%m-%d-%Y"))
+    auto now = std::chrono::system_clock::now();
+    auto time_t_now = std::chrono::system_clock::to_time_t(now);
+    std::stringstream date_ss;
+    date_ss << std::put_time(std::localtime(&time_t_now), "%m-%d-%Y");
+    std::string date_str = date_ss.str();
+
+    fs::path base_dir = "runs/results";
+    fs::path date_dir = base_dir / date_str;
+
+    if (!fs::exists(date_dir)) {
+      RCLCPP_WARN(this->get_logger(), "Date directory does not exist: %s",
+                  date_dir.string().c_str());
+      return "";
+    }
+
+    // Find the latest resultsN directory
+    int latest_run = 0;
+    for (const auto& entry : fs::directory_iterator(date_dir)) {
+      if (entry.is_directory()) {
+        std::string dir_name = entry.path().filename().string();
+        if (dir_name.rfind("results", 0) == 0) {  // starts with "results"
+          try {
+            int run_num = std::stoi(dir_name.substr(7));  // extract number after "results"
+            if (run_num > latest_run) {
+              latest_run = run_num;
+            }
+          } catch (...) {
+            continue;
+          }
+        }
+      }
+    }
+
+    if (latest_run == 0) {
+      RCLCPP_WARN(this->get_logger(), "No results directories found in: %s",
+                  date_dir.string().c_str());
+      return "";
+    }
+
+    fs::path latest_dir = date_dir / ("results" + std::to_string(latest_run));
+    return latest_dir.string();
+  }
+
+  // Function to save spectrum data to a CSV file
+  void saveSpectrumData(const std::vector<uint16_t>& wavelengths,
+                        const std::vector<double>& spectrum) {
+    std::string save_dir = findLatestResultsDir();
+
+    if (save_dir.empty()) {
+      RCLCPP_ERROR(this->get_logger(),
+                   "Could not find results directory. Spectrum data not saved.");
+      return;
+    }
+
+    // Generate timestamp for unique filename
+    auto now = std::chrono::system_clock::now();
+    auto time_t_now = std::chrono::system_clock::to_time_t(now);
+    std::stringstream ts_ss;
+    ts_ss << std::put_time(std::localtime(&time_t_now), "%H%M%S");
+
+    std::string filename = save_dir + "/spectrum_" + ts_ss.str() + ".csv";
+
+    std::ofstream file(filename);
+    if (!file.is_open()) {
+      RCLCPP_ERROR(this->get_logger(), "Failed to open file for writing: %s",
+                   filename.c_str());
+      return;
+    }
+
+    // Write header
+    file << "wavelength,spectrum\n";
+
+    // Write data
+    size_t num_values = std::min(wavelengths.size(), spectrum.size());
+    for (size_t i = 0; i < num_values; ++i) {
+      file << wavelengths[i] << "," << std::fixed << std::setprecision(6)
+           << spectrum[i] << "\n";
+    }
+
+    file.close();
+    RCLCPP_INFO(this->get_logger(), "Spectrum data saved to: %s", filename.c_str());
+  }
+
   std::shared_ptr<moveit::planning_interface::MoveGroupInterface> move_group_;
   std::shared_ptr<moveit::planning_interface::PlanningSceneInterface>
       planning_scene_interface_;
   rclcpp_action::Server<ProcessTarget>::SharedPtr action_server_;
   rclcpp_action::Client<GripperCommand>::SharedPtr gripper_action_client_;
+  rclcpp::Client<GetSpectrum>::SharedPtr spectrum_client_;
   rclcpp::CallbackGroup::SharedPtr callback_group_;
 };
 

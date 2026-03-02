@@ -18,6 +18,10 @@ def generate_launch_description():
                     "--log-level",
                     "move_group:=FATAL",
                 ],
+                remappings=[
+                    ("/robot_description", "/kinova/robot_description"),
+                    ("/joint_states", "/kinova/joint_states"),
+                ],
             ),
             Node(
                 package="leaf_grasping_move",

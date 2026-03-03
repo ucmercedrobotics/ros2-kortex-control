@@ -57,7 +57,7 @@ class YOLONode(Node):
 
         # Get the model path from the installed ROS2 package share directory
         package_share = get_package_share_directory("kortex_vision")
-        model_path = os.path.join(package_share, "models", "citrus.pt")
+        model_path = os.path.join(package_share, "models", "yolov8x-leaf-seg-model.pt")
         self.get_logger().info(f"Loading model from: {model_path}")
 
         try:

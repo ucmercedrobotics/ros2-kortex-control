@@ -57,7 +57,7 @@ class YOLONode(Node):
 
         # Get the model path from the installed ROS2 package share directory
         package_share = get_package_share_directory("kortex_vision")
-        model_path = os.path.join(package_share, "models", "yolov8x-leaf-seg-model.pt")
+        model_path = os.path.join(package_share, "models", "final-pistachio-yolov8x-seg.pt")
         self.get_logger().info(f"Loading model from: {model_path}")
 
         try:
@@ -493,7 +493,9 @@ class YOLONode(Node):
         final_target_frame = "base_link"
 
         # This is the vector from the 'end_effector_link' to the fingers.
-        FINGER_OFFSET_Z = 0.166
+        # FINGER_OFFSET_Z = 0.166 # -> hyperspectral sensor
+        FINGER_OFFSET_Z = 0.1438 # -> Robotiq fingers
+        
         offset_in_ee_frame = np.array([0.0, 0.0, FINGER_OFFSET_Z])
 
         for i, axis_set in enumerate(self.axes):

@@ -9,6 +9,7 @@
 #include "behaviortree_ros2/ros_node_params.hpp"
 #include "kortex_bt/actions/assert_true.hpp"
 #include "kortex_bt/actions/check_value.hpp"
+#include "kortex_bt/actions/gripper_control.hpp"
 #include "kortex_bt/actions/identify_object.hpp"
 #include "kortex_bt/actions/move_to.hpp"
 #include "kortex_bt/mission_tcp.hpp"
@@ -36,6 +37,9 @@ int main(int argc, char **argv) {
 
   // action nodes
   factory.registerNodeType<MoveTo>("goToPosition", ros_params);
+  factory.registerNodeType<MoveTo>("goToHome", ros_params);
+  factory.registerNodeType<GripperControl>("pickObject", ros_params);
+  factory.registerNodeType<GripperControl>("placeObject", ros_params);
   factory.registerNodeType<IdentifyObject>("identifyObject", ros_params);
   // conditional nodes
   factory.registerNodeType<AssertTrue>("AssertTrue");

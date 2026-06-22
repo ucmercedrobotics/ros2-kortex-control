@@ -1,0 +1,13 @@
+# Request
+float64 OPEN = 0.0
+float64 CLOSE = 0.8
+# Target gripper position (0.0 = fully open, 0.8 = fully closed)
+float64 position
+
+---
+# Result
+bool success
+
+---
+# Feedback
+string processing_status

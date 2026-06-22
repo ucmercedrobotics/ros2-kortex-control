@@ -4,6 +4,8 @@
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Transform.h>
 
+#include <future>
+
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 MoveToNode::MoveToNode()
@@ -31,6 +33,21 @@ MoveToNode::MoveToNode()
 
   tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
   tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
+
+  // Create the gripper action server
+  gripper_action_server_ = rclcpp_action::create_server<GripperControl>(
+      this,
+      "/gripper_control",
+      std::bind(&MoveToNode::handle_gripper_goal, this, std::placeholders::_1,
+                std::placeholders::_2),
+      std::bind(&MoveToNode::handle_gripper_cancel, this,
+                std::placeholders::_1),
+      std::bind(&MoveToNode::handle_gripper_accepted, this,
+                std::placeholders::_1));
+
+  // Create the downstream gripper action client
+  gripper_action_client_ = rclcpp_action::create_client<GripperCommand>(
+      this, "/robotiq_gripper_controller/gripper_cmd");
 }
 
 // Handle incoming goal requests
@@ -182,6 +199,90 @@ geometry_msgs::msg::Pose MoveToNode::compute_relative_goal_pose(
   target_pose.orientation = tf2::toMsg(target_orientation);
 
   return target_pose;
+}
+
+rclcpp_action::GoalResponse MoveToNode::handle_gripper_goal(
+    const rclcpp_action::GoalUUID &uuid,
+    std::shared_ptr<const GripperControl::Goal> goal) {
+  (void)uuid;
+  RCLCPP_INFO(this->get_logger(),
+              "Received gripper goal request (position: %.3f)", goal->position);
+  return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
+}
+
+rclcpp_action::CancelResponse MoveToNode::handle_gripper_cancel(
+    const std::shared_ptr<GoalHandleGripperControl> goal_handle) {
+  (void)goal_handle;
+  RCLCPP_INFO(this->get_logger(), "Gripper goal cancel requested");
+  return rclcpp_action::CancelResponse::ACCEPT;
+}
+
+void MoveToNode::handle_gripper_accepted(
+    const std::shared_ptr<GoalHandleGripperControl> goal_handle) {
+  std::thread{std::bind(&MoveToNode::execute_gripper, this, goal_handle)}
+      .detach();
+}
+
+void MoveToNode::execute_gripper(
+    const std::shared_ptr<GoalHandleGripperControl> goal_handle) {
+  auto goal = goal_handle->get_goal();
+  auto result = std::make_shared<GripperControl::Result>();
+
+  if (!gripper_action_client_->wait_for_action_server(
+          std::chrono::seconds(5))) {
+    RCLCPP_ERROR(this->get_logger(),
+                 "Gripper controller not available after 5s");
+    result->success = false;
+    goal_handle->succeed(result);
+    return;
+  }
+
+  auto gripper_goal = GripperCommand::Goal();
+  gripper_goal.command.position = goal->position;
+  gripper_goal.command.max_effort = 0.0;
+
+  send_gripper_feedback(goal_handle, "Sending gripper command");
+
+  // Use a promise so this thread can block until the downstream action
+  // completes while the main rclcpp::spin processes the callbacks.
+  std::promise<bool> done_promise;
+  auto done_future = done_promise.get_future();
+
+  auto send_goal_options =
+      rclcpp_action::Client<GripperCommand>::SendGoalOptions();
+  send_goal_options.result_callback =
+      [&done_promise](
+          const rclcpp_action::ClientGoalHandle<GripperCommand>::WrappedResult
+              &wrapped_result) {
+        done_promise.set_value(wrapped_result.code ==
+                               rclcpp_action::ResultCode::SUCCEEDED);
+      };
+  send_goal_options.goal_response_callback =
+      [this](
+          const rclcpp_action::ClientGoalHandle<GripperCommand>::SharedPtr
+              &goal_handle) {
+        if (!goal_handle) {
+          RCLCPP_ERROR(this->get_logger(),
+                       "Gripper goal was rejected by controller");
+        }
+      };
+
+  gripper_action_client_->async_send_goal(gripper_goal, send_goal_options);
+
+  bool success = done_future.get();
+  result->success = success;
+  send_gripper_feedback(goal_handle, success ? "SUCCESS" : "FAILED");
+  goal_handle->succeed(result);
+}
+
+void MoveToNode::send_gripper_feedback(
+    const std::shared_ptr<GoalHandleGripperControl> goal_handle,
+    const std::string &feedback_msg) {
+  auto feedback = std::make_shared<GripperControl::Feedback>();
+  feedback->processing_status = feedback_msg;
+  goal_handle->publish_feedback(feedback);
+  RCLCPP_INFO(this->get_logger(), "Gripper feedback: %s",
+              feedback_msg.c_str());
 }
 
 int main(int argc, char **argv) {

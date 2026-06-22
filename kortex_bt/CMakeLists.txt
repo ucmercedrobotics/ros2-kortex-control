@@ -21,6 +21,7 @@ add_executable(bt_runner
   src/xml_validation.cpp
   src/actions/check_value.cpp
   src/actions/assert_true.cpp
+  src/actions/gripper_control.cpp
   src/actions/identify_object.cpp
   src/actions/move_to.cpp
 )

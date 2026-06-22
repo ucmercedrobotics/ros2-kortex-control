@@ -87,7 +87,7 @@ class ArmCommander : public rclcpp::Node {
     joint_goal[1] = -0.785398;
     joint_goal[2] = -2.0;
     joint_goal[3] = 0.0;
-    joint_goal[4] = -0.436332;
+    joint_goal[4] = -0.136332;
     joint_goal[5] = 1.5708;
 
     RCLCPP_INFO(this->get_logger(), "Planning motion to home position...");

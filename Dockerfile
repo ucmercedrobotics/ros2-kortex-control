@@ -77,6 +77,9 @@ RUN echo "export PYTHONPATH=/usr/lib/python3/dist-packages:\$PYTHONPATH" >> /roo
 
 # TODO: add stage for x86 using official pytorch images with CUDA
 
+# JetPack 6 boards (AGX Orin, Orin Nano). Their CUDA/cuDNN comes from the host
+# via the bind mounts the Makefile sets up, because these wheels link against
+# it rather than bundling it -- so the host needs a matching CUDA install.
 FROM base AS jetson
 # This is terrible to do, but they offer me no choice...
 # only works on AGX because it's built for libcudnn 9 (cuda 12.6)
@@ -86,5 +89,16 @@ RUN curl -O "https://pypi.jetson-ai-lab.io/jp6/cu126/+f/62a/1beee9f2f1470/torch-
     pip install torch-2.8.0-cp310-cp310-linux_aarch64.whl \
     torchvision-0.23.0-cp310-cp310-linux_aarch64.whl
 
-ENV LD_LIBRARY_PATH=/usr/local/cuda/lib64:/usr/local/cuda/targets/aarch64-linux/lib/:/usr/lib/aarch64-linux-gnu-host/openblas-pthread:/usr/lib/aarch64-linux-gnu-host/
+# libcuda.so.1 lives in the nvidia/ subdirectory of the host lib mount, which
+# is not on the default search path.
+ENV LD_LIBRARY_PATH=/usr/local/cuda/lib64:/usr/local/cuda/targets/aarch64-linux/lib/:/usr/lib/aarch64-linux-gnu-host/openblas-pthread:/usr/lib/aarch64-linux-gnu-host/:/usr/lib/aarch64-linux-gnu-host/nvidia
 ENV PATH=/usr/local/cuda/bin:${PATH}
+
+# Jetson Thor ships a CUDA 13 driver and an sm_110 GPU, neither of which the
+# JetPack 6 wheels above can target. Stock upstream wheels work here and are
+# self-contained: they pull their own CUDA runtime and cuDNN as nvidia-*-cu13
+# dependencies, so unlike the jetson stage nothing is mounted from the host.
+FROM base AS thor
+RUN . /.venv/bin/activate && \
+    pip install --index-url https://download.pytorch.org/whl/cu130 \
+    torch==2.13.0 torchvision==0.28.0

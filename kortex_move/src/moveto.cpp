@@ -13,8 +13,9 @@ MoveToNode::MoveToNode()
 {
   // Create the action server
   action_server_ = rclcpp_action::create_server<MoveTo>(
-      this,        // Node pointer
-      "/move_to",  // Action name
+      this,       // Node pointer
+      "move_to",  // Action name, relative so it resolves under this node's
+                  // namespace instead of colliding across robots
       std::bind(&MoveToNode::handle_goal, this, std::placeholders::_1,
                 std::placeholders::_2),  // Goal handler
       std::bind(&MoveToNode::handle_cancel, this,
@@ -23,10 +24,15 @@ MoveToNode::MoveToNode()
                 std::placeholders::_1)  // Accepted handler
   );
 
-  // Create a MoveGroupInterface for controlling the robot
+  std::string move_group_ns = this->get_namespace();
+  if (move_group_ns == "/") {
+    move_group_ns.clear();
+  }
+  moveit::planning_interface::MoveGroupInterface::Options options("manipulator");
+  options.move_group_namespace_ = move_group_ns;
   move_group_interface_ =
       std::make_shared<moveit::planning_interface::MoveGroupInterface>(
-          std::shared_ptr<MoveToNode>(this), "manipulator");
+          std::shared_ptr<MoveToNode>(this), options);
   move_group_interface_->setPlanningPipelineId(
       "pilz_industrial_motion_planner");
   move_group_interface_->setPlannerId("PTP");
@@ -37,7 +43,7 @@ MoveToNode::MoveToNode()
   // Create the gripper action server
   gripper_action_server_ = rclcpp_action::create_server<GripperControl>(
       this,
-      "/gripper_control",
+      "gripper_control",  // relative, same reasoning as /move_to above
       std::bind(&MoveToNode::handle_gripper_goal, this, std::placeholders::_1,
                 std::placeholders::_2),
       std::bind(&MoveToNode::handle_gripper_cancel, this,
@@ -45,9 +51,8 @@ MoveToNode::MoveToNode()
       std::bind(&MoveToNode::handle_gripper_accepted, this,
                 std::placeholders::_1));
 
-  // Create the downstream gripper action client
   gripper_action_client_ = rclcpp_action::create_client<GripperCommand>(
-      this, "/robotiq_gripper_controller/gripper_cmd");
+      this, "robotiq_gripper_controller/gripper_cmd");
 }
 
 // Handle incoming goal requests
